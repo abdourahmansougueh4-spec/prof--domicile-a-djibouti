@@ -53,6 +53,9 @@ type ProfilComplet = {
   attestation_employeur_url: string | null
   carte_professionnelle_url: string | null
   attestation_religieuse_url: string | null
+  carte_etudiante_url: string | null
+  carte_identite_url: string | null
+  bac_s_scan_url: string | null
   verifie_physique: boolean
   date_verification_physique: string | null
   note_verification_admin: string | null
@@ -207,6 +210,9 @@ export default function ProfilProfesseur() {
     attestation_employeur_url: null,
     carte_professionnelle_url: null,
     attestation_religieuse_url: null,
+    carte_etudiante_url: null,
+    carte_identite_url: null,
+    bac_s_scan_url: null,
     verifie_physique: false,
     date_verification_physique: null,
     note_verification_admin: null,
@@ -272,6 +278,9 @@ export default function ProfilProfesseur() {
         attestation_employeur_url: prof?.attestation_employeur_url || null,
         carte_professionnelle_url: prof?.carte_professionnelle_url || null,
         attestation_religieuse_url: prof?.attestation_religieuse_url || null,
+        carte_etudiante_url: prof?.carte_etudiante_url || null,
+        carte_identite_url: prof?.carte_identite_url || null,
+        bac_s_scan_url: prof?.bac_s_scan_url || null,
         verifie_physique: prof?.verifie_physique || false,
         date_verification_physique: prof?.date_verification_physique || null,
         note_verification_admin: prof?.note_verification_admin || null,
@@ -771,7 +780,7 @@ export default function ProfilProfesseur() {
                 {profil.approuve && (
                   <motion.div
                     initial={{ scale: 0 }}
-                    animate={{ animate: 1, scale: 1 }}
+                    animate={{ scale: 1 }}
                     className="w-7 h-7 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm border-2 border-white shadow-lg"
                     title="Profil vérifié"
                   >
