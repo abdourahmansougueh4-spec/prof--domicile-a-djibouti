@@ -1,0 +1,359 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
+
+type DemandeAcceptee = {
+  id: string
+  professeur_id: string
+  prof_nom: string
+  prof_photo: string | null
+  avis_existant: {
+    id: string
+    note: number
+    commentaire: string
+    created_at: string
+  } | null
+}
+
+export default function AvisParent() {
+  const supabase = createClient()
+  const [demandes, setDemandes] = useState<DemandeAcceptee[]>([])
+  const [loading, setLoading] = useState(true)
+
+  const [modalOuvert, setModalOuvert] = useState<string | null>(null)
+  const [note, setNote] = useState(5)
+  const [commentaire, setCommentaire] = useState('')
+  const [sauvegarde, setSauvegarde] = useState(false)
+  const [erreur, setErreur] = useState('')
+
+  useEffect(() => {
+    charger()
+  }, [])
+
+  const charger = async () => {
+    setLoading(true)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    const { data: demandesData } = await supabase
+      .from('demandes')
+      .select('*')
+      .eq('parent_id', user.id)
+      .eq('statut', 'acceptee')
+
+    const resultats: DemandeAcceptee[] = []
+
+    for (const d of demandesData || []) {
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('nom_complet, photo_url')
+        .eq('id', d.professeur_id)
+        .single()
+
+      const { data: avis } = await supabase
+        .from('avis')
+        .select('id, note, commentaire, created_at')
+        .eq('parent_id', user.id)
+        .eq('professeur_id', d.professeur_id)
+        .maybeSingle()
+
+      resultats.push({
+        id: d.id,
+        professeur_id: d.professeur_id,
+        prof_nom: prof?.nom_complet || 'Prof',
+        prof_photo: prof?.photo_url || null,
+        avis_existant: avis || null,
+      })
+    }
+
+    setDemandes(resultats)
+    setLoading(false)
+  }
+
+  const ouvrirModal = (demande: DemandeAcceptee) => {
+    setModalOuvert(demande.professeur_id)
+    if (demande.avis_existant) {
+      setNote(demande.avis_existant.note)
+      setCommentaire(demande.avis_existant.commentaire)
+    } else {
+      setNote(5)
+      setCommentaire('')
+    }
+    setErreur('')
+  }
+
+  const enregistrer = async () => {
+    if (!modalOuvert) return
+    if (commentaire.trim().length < 10) {
+      setErreur('Le commentaire doit contenir au moins 10 caractères')
+      return
+    }
+
+    setSauvegarde(true)
+    setErreur('')
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      // Vérifier si un avis existe déjà
+      const { data: existant } = await supabase
+        .from('avis')
+        .select('id')
+        .eq('parent_id', user.id)
+        .eq('professeur_id', modalOuvert)
+        .maybeSingle()
+
+      if (existant) {
+        // Modifier
+        const { error } = await supabase
+          .from('avis')
+          .update({
+            note,
+            commentaire: commentaire.trim(),
+          })
+          .eq('id', existant.id)
+
+        if (error) throw error
+      } else {
+        // Créer
+        const { error } = await supabase.from('avis').insert({
+          parent_id: user.id,
+          professeur_id: modalOuvert,
+          note,
+          commentaire: commentaire.trim(),
+          publie: true,
+        })
+
+        if (error) throw error
+      }
+
+      await charger()
+      setModalOuvert(null)
+    } catch (err: any) {
+      setErreur(err.message || 'Erreur')
+    } finally {
+      setSauvegarde(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+          className="w-12 h-12 border-4 border-blue-700 border-t-transparent rounded-full"
+        />
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      <Link
+        href="/espace-parent"
+        className="text-sm text-slate-500 hover:text-blue-600 inline-flex items-center gap-1"
+      >
+        ← Retour au tableau de bord
+      </Link>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 md:p-8 border border-white/80 shadow-xl"
+      >
+        <h1 className="text-3xl font-black text-slate-900 mb-1">
+          ⭐ Mes avis
+        </h1>
+        <p className="text-slate-600 text-sm mb-8">
+          Partagez votre expérience pour aider les autres parents.
+        </p>
+
+        {demandes.length === 0 ? (
+          <div className="text-center py-16">
+            <div className="text-6xl mb-4">⭐</div>
+            <h3 className="font-black text-slate-900 text-xl mb-2">
+              Aucun prof à noter
+            </h3>
+            <p className="text-slate-600 text-sm">
+              Vous pourrez laisser un avis une fois qu'un prof aura accepté
+              votre demande.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {demandes.map((d, i) => (
+              <motion.div
+                key={d.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: i * 0.05 }}
+                className="bg-white rounded-2xl p-5 border-2 border-slate-200"
+              >
+                <div className="flex items-start gap-4 flex-wrap">
+                  {d.prof_photo ? (
+                    <img
+                      src={d.prof_photo}
+                      alt={d.prof_nom}
+                      className="w-16 h-16 rounded-2xl object-cover shadow-md flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white text-3xl shadow-md flex-shrink-0">
+                      👨‍🏫
+                    </div>
+                  )}
+
+                  <div className="flex-1 min-w-[200px]">
+                    <div className="font-black text-slate-900 text-lg mb-2">
+                      {d.prof_nom}
+                    </div>
+
+                    {d.avis_existant ? (
+                      <div className="bg-amber-50 rounded-xl p-4 border border-amber-200">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-xl">
+                            {'⭐'.repeat(d.avis_existant.note)}
+                          </span>
+                          <span className="text-xs text-slate-500">
+                            {new Date(
+                              d.avis_existant.created_at
+                            ).toLocaleDateString('fr-FR')}
+                          </span>
+                        </div>
+                        <p className="text-sm text-slate-700 italic">
+                          « {d.avis_existant.commentaire} »
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="text-sm text-slate-500 italic mb-3">
+                        Vous n'avez pas encore laissé d'avis pour ce prof.
+                      </div>
+                    )}
+
+                    <button
+                      onClick={() => ouvrirModal(d)}
+                      className="mt-3 px-5 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-xl font-bold text-sm shadow-lg hover:shadow-xl transition-all"
+                    >
+                      {d.avis_existant ? '✏️ Modifier mon avis' : '⭐ Laisser un avis'}
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </motion.div>
+
+      {/* Modal */}
+      <AnimatePresence>
+        {modalOuvert && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden"
+            >
+              <div className="bg-gradient-to-r from-amber-500 to-orange-600 p-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-black text-white">
+                    ⭐ Votre avis
+                  </h2>
+                  <button
+                    onClick={() => setModalOuvert(null)}
+                    className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white text-xl"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-6 space-y-5">
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-3">
+                    Votre note
+                  </label>
+                  <div className="flex justify-center gap-2">
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <button
+                        key={n}
+                        type="button"
+                        onClick={() => setNote(n)}
+                        className={`text-4xl transition-all ${
+                          n <= note
+                            ? 'scale-110 drop-shadow-lg'
+                            : 'opacity-30 hover:opacity-60'
+                        }`}
+                      >
+                        ⭐
+                      </button>
+                    ))}
+                  </div>
+                  <div className="text-center mt-2 text-sm font-bold text-slate-700">
+                    {note}/5 —{' '}
+                    {note === 5
+                      ? 'Excellent !'
+                      : note === 4
+                      ? 'Très bien'
+                      : note === 3
+                      ? 'Bien'
+                      : note === 2
+                      ? 'Moyen'
+                      : 'Décevant'}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">
+                    Commentaire <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    value={commentaire}
+                    onChange={(e) => setCommentaire(e.target.value)}
+                    rows={5}
+                    maxLength={500}
+                    placeholder="Partagez votre expérience avec ce professeur..."
+                    className="w-full px-4 py-3 bg-white border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none resize-none"
+                  />
+                  <p className="text-xs text-slate-500 mt-1">
+                    {commentaire.length}/500 caractères
+                  </p>
+                </div>
+
+                {erreur && (
+                  <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-start gap-2">
+                    <span>⚠️</span>
+                    <p className="text-red-700 text-xs font-medium">
+                      {erreur}
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setModalOuvert(null)}
+                    disabled={sauvegarde}
+                    className="flex-1 py-3 rounded-xl font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors disabled:opacity-50"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    onClick={enregistrer}
+                    disabled={sauvegarde}
+                    className="flex-1 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-amber-500 to-orange-600 shadow-lg disabled:opacity-50"
+                  >
+                    {sauvegarde ? '⏳...' : '✓ Publier'}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}

@@ -1,0 +1,317 @@
+'use client'
+
+import { motion } from 'framer-motion'
+import Link from 'next/link'
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
+
+export default function DashboardParent() {
+  const supabase = createClient()
+  const [prenom, setPrenom] = useState('')
+  const [stats, setStats] = useState({
+    enfants: 0,
+    profsTotal: 0,
+    demandesEnAttente: 0,
+    profsAcceptes: 0,
+    avis: 0,
+  })
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const chargerDonnees = async () => {
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+      if (!authUser) return
+
+      // Profil
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('nom_complet')
+        .eq('id', authUser.id)
+        .single()
+
+      if (profile?.nom_complet) {
+        setPrenom(profile.nom_complet.split(' ')[0])
+      }
+
+      // Compter parallèlement
+      const [enfantsRes, profsRes, demandesAttenteRes, acceptesRes, avisRes] =
+        await Promise.all([
+          supabase
+            .from('enfants')
+            .select('*', { count: 'exact', head: true })
+            .eq('parent_id', authUser.id),
+          supabase
+            .from('profiles')
+            .select('*', { count: 'exact', head: true })
+            .eq('role', 'professeur')
+            .eq('approuve', true)
+            .eq('banni', false),
+          supabase
+            .from('demandes')
+            .select('*', { count: 'exact', head: true })
+            .eq('parent_id', authUser.id)
+            .eq('statut', 'en_attente'),
+          supabase
+            .from('demandes')
+            .select('*', { count: 'exact', head: true })
+            .eq('parent_id', authUser.id)
+            .eq('statut', 'acceptee'),
+          supabase
+            .from('avis')
+            .select('*', { count: 'exact', head: true })
+            .eq('parent_id', authUser.id),
+        ])
+
+      setStats({
+        enfants: enfantsRes.count || 0,
+        profsTotal: profsRes.count || 0,
+        demandesEnAttente: demandesAttenteRes.count || 0,
+        profsAcceptes: acceptesRes.count || 0,
+        avis: avisRes.count || 0,
+      })
+      setLoading(false)
+    }
+
+    chargerDonnees()
+  }, [supabase])
+
+  const statsCards = [
+    {
+      label: 'Mes enfants',
+      valeur: stats.enfants,
+      emoji: '👨‍👩‍👧',
+      couleur: 'from-blue-500 to-blue-600',
+      href: '/espace-parent/enfants',
+    },
+    {
+      label: 'Profs disponibles',
+      valeur: stats.profsTotal,
+      emoji: '🌐',
+      couleur: 'from-emerald-500 to-emerald-600',
+      href: '/espace-parent/profs',
+    },
+    {
+      label: 'Demandes en attente',
+      valeur: stats.demandesEnAttente,
+      emoji: '⏳',
+      couleur: 'from-amber-500 to-amber-600',
+      href: '/espace-parent/demandes',
+    },
+    {
+      label: 'Profs acceptés',
+      valeur: stats.profsAcceptes,
+      emoji: '✅',
+      couleur: 'from-purple-500 to-purple-600',
+      href: '/espace-parent/mes-profs',
+    },
+  ]
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+          className="w-12 h-12 border-4 border-blue-700 border-t-transparent rounded-full"
+        />
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Bienvenue */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="bg-gradient-to-br from-blue-700 via-indigo-600 to-blue-800 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden text-white"
+      >
+        <motion.div
+          className="absolute top-[-50px] right-[-50px] w-64 h-64 bg-white/10 rounded-full blur-3xl"
+          animate={{ x: [0, 30, 0], y: [0, -30, 0] }}
+          transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
+        />
+        <div className="relative z-10">
+          <h1 className="text-3xl md:text-4xl font-black mb-2">
+            Bonjour {prenom} 👋
+          </h1>
+          <p className="text-blue-100 mb-4">
+            Bienvenue sur votre espace parent. Trouvez le prof idéal pour vos
+            enfants.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/espace-parent/recherche"
+              className="inline-flex items-center gap-2 bg-white text-blue-700 px-4 py-2.5 rounded-xl font-bold text-sm hover:bg-blue-50 transition-colors shadow-lg"
+            >
+              🔍 Trouver un prof
+            </Link>
+            <Link
+              href="/espace-parent/charte-qualite"
+              className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white px-4 py-2.5 rounded-xl font-bold text-sm hover:bg-white/30 transition-colors border border-white/30"
+            >
+              📜 Notre charte qualité
+            </Link>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {statsCards.map((s, i) => (
+          <motion.div
+            key={s.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 + i * 0.08 }}
+          >
+            <Link href={s.href}>
+              <div className="bg-white/80 backdrop-blur-xl rounded-2xl p-4 md:p-5 border border-white/80 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">
+                <div
+                  className={`w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br ${s.couleur} flex items-center justify-center text-white text-xl md:text-2xl shadow-lg mb-3`}
+                >
+                  {s.emoji}
+                </div>
+                <div className="text-2xl md:text-3xl font-black text-slate-900 mb-1">
+                  {s.valeur}
+                </div>
+                <div className="text-[10px] md:text-xs text-slate-500 font-medium">
+                  {s.label}
+                </div>
+              </div>
+            </Link>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Actions rapides */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.4 }}
+        className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 md:p-8 border border-white/80 shadow-xl"
+      >
+        <h2 className="text-xl font-black text-slate-900 mb-5">
+          ⚡ Actions rapides
+        </h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          {[
+            {
+              href: '/espace-parent/recherche',
+              label: 'Rechercher un prof',
+              emoji: '🔍',
+              couleur: 'from-blue-500 to-blue-600',
+            },
+            {
+              href: '/espace-parent/enfants',
+              label: 'Mes enfants',
+              emoji: '👨‍👩‍👧',
+              couleur: 'from-emerald-500 to-emerald-600',
+            },
+            {
+              href: '/espace-parent/demandes',
+              label: 'Mes demandes',
+              emoji: '📤',
+              couleur: 'from-purple-500 to-purple-600',
+            },
+            {
+              href: '/espace-parent/mes-profs',
+              label: 'Mes profs actuels',
+              emoji: '👨‍🏫',
+              couleur: 'from-pink-500 to-pink-600',
+            },
+            {
+              href: '/espace-parent/avis',
+              label: 'Laisser un avis',
+              emoji: '⭐',
+              couleur: 'from-amber-500 to-amber-600',
+            },
+            {
+              href: '/espace-parent/profil',
+              label: 'Mon profil',
+              emoji: '👤',
+              couleur: 'from-indigo-500 to-indigo-600',
+            },
+          ].map((a) => (
+            <Link key={a.href} href={a.href}>
+              <div className="flex items-center gap-2 md:gap-3 p-3 md:p-4 rounded-2xl bg-white border-2 border-slate-200 hover:border-blue-400 hover:shadow-lg transition-all">
+                <div
+                  className={`w-8 h-8 md:w-10 md:h-10 rounded-xl bg-gradient-to-br ${a.couleur} flex items-center justify-center text-white text-sm md:text-lg shadow-md flex-shrink-0`}
+                >
+                  {a.emoji}
+                </div>
+                <span className="font-bold text-slate-700 text-xs md:text-sm">
+                  {a.label}
+                </span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </motion.div>
+
+      {/* Info charte */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.5 }}
+        className="bg-gradient-to-br from-blue-50 to-emerald-50 rounded-3xl p-6 border border-blue-100"
+      >
+        <div className="flex items-start gap-4 flex-wrap">
+          <div className="text-3xl">🎯</div>
+          <div className="flex-1 min-w-[250px]">
+            <h3 className="font-black text-slate-900 mb-1">
+              Satisfaction garantie
+            </h3>
+            <p className="text-sm text-slate-700 mb-3">
+              Si le prof ne vous plaît pas, nous le remplaçons gratuitement.
+              Consultez notre charte qualité complète.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href="/espace-parent/charte-qualite"
+                className="inline-flex items-center gap-1 bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-blue-800 transition-colors"
+              >
+                📜 Voir la charte
+              </Link>
+              <a
+                href="https://wa.me/25377741482"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 bg-green-500 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-green-600 transition-colors"
+              >
+                💬 WhatsApp
+              </a>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Info règles */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.6 }}
+        className="bg-amber-50 rounded-3xl p-6 border border-amber-100"
+      >
+        <div className="flex items-start gap-4">
+          <div className="text-3xl">📖</div>
+          <div>
+            <h3 className="font-black text-slate-900 mb-1">
+              À lire avant de commencer
+            </h3>
+            <p className="text-sm text-slate-700 mb-3">
+              Consultez nos règles pour une expérience optimale.
+            </p>
+            <Link
+              href="/espace-parent/regles"
+              className="inline-flex items-center gap-1 bg-amber-500 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-amber-600 transition-colors"
+            >
+              📖 Voir les règles
+            </Link>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  )
+}

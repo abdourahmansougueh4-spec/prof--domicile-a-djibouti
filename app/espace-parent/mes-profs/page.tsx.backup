@@ -1,0 +1,238 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
+import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
+
+type ProfAvecSuivi = {
+  id: string
+  nom_complet: string
+  photo_url: string | null
+  matiere: string | null
+  created_at: string
+  demande_id: string
+  suivi: {
+    mois: string
+    note: number | null
+    appreciation: string | null
+  } | null
+}
+
+export default function MesProfs() {
+  const supabase = createClient()
+  const [profs, setProfs] = useState<ProfAvecSuivi[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    charger()
+  }, [])
+
+  const charger = async () => {
+    setLoading(true)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    // Récupérer les demandes acceptées
+    const { data: demandes } = await supabase
+      .from('demandes')
+      .select('*')
+      .eq('parent_id', user.id)
+      .eq('statut', 'acceptee')
+      .order('created_at', { ascending: false })
+
+    const profsComplets: ProfAvecSuivi[] = []
+
+    for (const d of demandes || []) {
+      // Infos prof
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('nom_complet, photo_url')
+        .eq('id', d.professeur_id)
+        .single()
+
+      // Suivi du mois en cours
+      const moisActuel = new Date().toLocaleDateString('fr-FR', {
+        month: 'long',
+        year: 'numeric',
+      })
+
+      const { data: suivi } = await supabase
+        .from('suivi_mensuel')
+        .select('mois, note, appreciation')
+        .eq('demande_id', d.id)
+        .eq('mois', moisActuel)
+        .maybeSingle()
+
+      profsComplets.push({
+        id: d.professeur_id,
+        nom_complet: prof?.nom_complet || 'Prof',
+        photo_url: prof?.photo_url || null,
+        matiere: d.matiere,
+        created_at: d.created_at,
+        demande_id: d.id,
+        suivi: suivi
+          ? {
+              mois: suivi.mois,
+              note: suivi.note,
+              appreciation: suivi.appreciation,
+            }
+          : null,
+      })
+    }
+
+    setProfs(profsComplets)
+    setLoading(false)
+  }
+
+  const couleurNote = (n: number | null) => {
+    if (!n) return 'text-slate-400'
+    if (n >= 15) return 'text-emerald-600'
+    if (n >= 10) return 'text-amber-600'
+    return 'text-red-600'
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+          className="w-12 h-12 border-4 border-blue-700 border-t-transparent rounded-full"
+        />
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      <Link
+        href="/espace-parent"
+        className="text-sm text-slate-500 hover:text-blue-600 inline-flex items-center gap-1"
+      >
+        ← Retour au tableau de bord
+      </Link>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 md:p-8 border border-white/80 shadow-xl"
+      >
+        <h1 className="text-3xl font-black text-slate-900 mb-1">
+          👨‍🏫 Mes professeurs
+        </h1>
+        <p className="text-slate-600 text-sm mb-8">
+          {profs.length} prof{profs.length > 1 ? 's' : ''} accepté
+          {profs.length > 1 ? 's' : ''} pour vos enfants
+        </p>
+
+        {profs.length === 0 ? (
+          <div className="text-center py-16">
+            <div className="text-6xl mb-4">👨‍🏫</div>
+            <h3 className="font-black text-slate-900 text-xl mb-2">
+              Aucun prof accepté
+            </h3>
+            <p className="text-slate-600 text-sm mb-6">
+              Envoyez des demandes et attendez l'acceptation.
+            </p>
+            <Link
+              href="/espace-parent/recherche"
+              className="inline-block px-6 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-blue-700 to-indigo-600 shadow-lg"
+            >
+              🔍 Trouver un prof
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {profs.map((p, i) => (
+              <motion.div
+                key={p.demande_id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: i * 0.05 }}
+                className="bg-white rounded-2xl p-5 border-2 border-slate-200"
+              >
+                <div className="flex items-start gap-4 flex-wrap">
+                  {p.photo_url ? (
+                    <img
+                      src={p.photo_url}
+                      alt={p.nom_complet}
+                      className="w-16 h-16 rounded-2xl object-cover shadow-md flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-600 to-blue-700 flex items-center justify-center text-white text-3xl shadow-md flex-shrink-0">
+                      👨‍🏫
+                    </div>
+                  )}
+
+                  <div className="flex-1 min-w-[200px]">
+                    <div className="font-black text-slate-900 text-lg mb-1">
+                      {p.nom_complet}
+                    </div>
+                    <div className="text-xs text-slate-500 mb-3">
+                      📚 {p.matiere || '—'} • Depuis{' '}
+                      {new Date(p.created_at).toLocaleDateString('fr-FR', {
+                        month: 'long',
+                        year: 'numeric',
+                      })}
+                    </div>
+
+                    {/* Suivi mensuel */}
+                    <div className="bg-gradient-to-br from-blue-50 to-emerald-50 rounded-xl p-4 border border-blue-100">
+                      <div className="text-xs font-bold text-slate-700 mb-2">
+                        📊 Suivi du mois
+                      </div>
+                      {p.suivi ? (
+                        <>
+                          <div className="flex items-center gap-3 mb-2">
+                            <span className="text-xs text-slate-600">
+                              Note :
+                            </span>
+                            <span
+                              className={`text-2xl font-black ${couleurNote(
+                                p.suivi.note
+                              )}`}
+                            >
+                              {p.suivi.note || '—'}/20
+                            </span>
+                          </div>
+                          {p.suivi.appreciation && (
+                            <div className="text-xs text-slate-700 italic bg-white rounded-lg p-3">
+                              « {p.suivi.appreciation} »
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <p className="text-xs text-slate-500 italic">
+                          Le suivi de ce mois n'a pas encore été publié par le
+                          prof.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <a
+                      href="https://wa.me/25377741482"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-blue-700 text-white rounded-xl font-bold text-xs shadow-lg hover:shadow-xl transition-all text-center"
+                    >
+                      💬 WhatsApp
+                    </a>
+                    <Link
+                      href="/espace-parent/avis"
+                      className="px-4 py-2 bg-amber-50 text-amber-700 rounded-xl font-bold text-xs hover:bg-amber-100 transition-colors text-center"
+                    >
+                      ⭐ Laisser un avis
+                    </Link>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </motion.div>
+    </div>
+  )
+}

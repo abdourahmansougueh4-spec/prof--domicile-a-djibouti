@@ -1,0 +1,449 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
+import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
+import BadgeEtoiles from '@/components/BadgeEtoiles'
+
+type StatutProf = {
+  etoiles: number
+  badge_admin: string | null
+  pionnier: boolean
+  pionnier_illustre: boolean
+  mois_avec_client: number
+  note_moyenne: number
+  nombre_avis: number
+}
+
+export default function MonStatut() {
+  const supabase = createClient()
+  const [statut, setStatut] = useState<StatutProf | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  const [modalOuvert, setModalOuvert] = useState(false)
+  const [motif, setMotif] = useState('')
+  const [envoi, setEnvoi] = useState(false)
+  const [succes, setSucces] = useState(false)
+  const [erreur, setErreur] = useState('')
+
+  useEffect(() => {
+    charger()
+  }, [])
+
+  const charger = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    const { data } = await supabase
+      .from('professeurs')
+      .select(
+        'etoiles, badge_admin, pionnier, pionnier_illustre, mois_avec_client, note_moyenne, nombre_avis'
+      )
+      .eq('id', user.id)
+      .single()
+
+    if (data) {
+      setStatut({
+        etoiles: data.etoiles || 0,
+        badge_admin: data.badge_admin,
+        pionnier: data.pionnier || false,
+        pionnier_illustre: data.pionnier_illustre || false,
+        mois_avec_client: data.mois_avec_client || 0,
+        note_moyenne: data.note_moyenne || 0,
+        nombre_avis: data.nombre_avis || 0,
+      })
+    }
+    setLoading(false)
+  }
+
+  const envoyerDemande = async () => {
+    if (motif.trim().length < 20) {
+      setErreur('Le motif doit contenir au moins 20 caractères')
+      return
+    }
+
+    setEnvoi(true)
+    setErreur('')
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { error } = await supabase.from('demandes_amelioration').insert({
+        professeur_id: user.id,
+        type: 'etoile',
+        motif: motif.trim(),
+        statut: 'en_attente',
+      })
+
+      if (error) throw error
+
+      setSucces(true)
+      setMotif('')
+    } catch (err: any) {
+      setErreur(err.message || 'Erreur')
+    } finally {
+      setEnvoi(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+          className="w-12 h-12 border-4 border-emerald-700 border-t-transparent rounded-full"
+        />
+      </div>
+    )
+  }
+
+  if (!statut) {
+    return (
+      <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-12 border border-white/80 shadow-xl text-center">
+        <div className="text-6xl mb-4">❌</div>
+        <p className="text-slate-600">Statut introuvable</p>
+      </div>
+    )
+  }
+
+  const prochainNiveau = statut.etoiles + 1
+  const labelsNiveaux: { [k: number]: string } = {
+    1: '⭐ Vérifié',
+    2: '⭐⭐ Confirmé',
+    3: '⭐⭐⭐ Expert',
+  }
+
+  return (
+    <div className="space-y-6">
+      <Link
+        href="/espace-professeur"
+        className="text-sm text-slate-500 hover:text-emerald-600 inline-flex items-center gap-1"
+      >
+        ← Retour au tableau de bord
+      </Link>
+
+      {/* Header statut */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-gradient-to-br from-emerald-600 via-teal-600 to-blue-700 rounded-3xl p-6 md:p-8 shadow-2xl text-white relative overflow-hidden"
+      >
+        <motion.div
+          className="absolute top-[-50px] right-[-50px] w-64 h-64 bg-white/10 rounded-full blur-3xl"
+          animate={{ x: [0, 30, 0], y: [0, -30, 0] }}
+          transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
+        />
+        <div className="relative z-10">
+          <div className="text-xs font-bold text-emerald-100 uppercase tracking-wider mb-2">
+            Mon statut actuel
+          </div>
+          <h1 className="text-3xl md:text-4xl font-black mb-4">
+            {statut.etoiles === 0
+              ? '🆕 Nouveau'
+              : labelsNiveaux[statut.etoiles]}
+          </h1>
+
+          <BadgeEtoiles
+            etoiles={statut.etoiles}
+            badgeAdmin={statut.badge_admin}
+            pionnier={statut.pionnier}
+            pionnierIllustre={statut.pionnier_illustre}
+            taille="lg"
+          />
+        </div>
+      </motion.div>
+
+      {/* Étoiles */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 md:p-8 border border-white/80 shadow-xl"
+      >
+        <h2 className="text-xl font-black text-slate-900 mb-5">
+          ⭐ Mes étoiles
+        </h2>
+
+        <div className="space-y-4">
+          {[
+            {
+              niveau: 1,
+              label: 'Vérifié',
+              desc: 'Documents fournis et vérifiés',
+              critere: 'Fournir tous les documents obligatoires',
+              atteint: statut.etoiles >= 1,
+            },
+            {
+              niveau: 2,
+              label: 'Confirmé',
+              desc: 'Plus de 5 mois avec un client',
+              critere: `${statut.mois_avec_client}/5 mois avec un client`,
+              atteint: statut.etoiles >= 2,
+            },
+            {
+              niveau: 3,
+              label: 'Expert',
+              desc: '12+ mois + note > 4.5',
+              critere: `${statut.mois_avec_client}/12 mois + ${statut.note_moyenne.toFixed(1)}/4.5`,
+              atteint: statut.etoiles >= 3,
+            },
+          ].map((e, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.15 + i * 0.05 }}
+              className={`flex items-start gap-4 p-5 rounded-2xl border-2 ${
+                e.atteint
+                  ? 'bg-emerald-50 border-emerald-300'
+                  : 'bg-white border-slate-200'
+              }`}
+            >
+              <div
+                className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shadow-lg flex-shrink-0 ${
+                  e.atteint
+                    ? 'bg-gradient-to-br from-amber-500 to-orange-600'
+                    : 'bg-slate-200'
+                }`}
+              >
+                {e.atteint ? '⭐' : '🔒'}
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                  <span className="font-black text-slate-900">
+                    Niveau {e.niveau} — {e.label}
+                  </span>
+                  {e.atteint && (
+                    <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-black">
+                      ✓ ATTEINT
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-slate-600 mb-2">{e.desc}</p>
+                <p
+                  className={`text-xs font-bold ${
+                    e.atteint ? 'text-emerald-700' : 'text-slate-500'
+                  }`}
+                >
+                  📊 {e.critere}
+                </p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
+
+      {/* Badges Admin */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 md:p-8 border border-white/80 shadow-xl"
+      >
+        <h2 className="text-xl font-black text-slate-900 mb-5">
+          🏅 Mes badges
+        </h2>
+
+        <div className="grid md:grid-cols-2 gap-3">
+          {[
+            {
+              emoji: '🏅',
+              label: 'Recommandé',
+              desc: 'Donné par l\'admin pour un prof exceptionnel',
+              actif: statut.badge_admin === 'recommande',
+              couleur: 'from-blue-500 to-blue-600',
+            },
+            {
+              emoji: '👑',
+              label: 'Super-Pro',
+              desc: 'Réservé aux meilleurs profs de la plateforme',
+              actif: statut.badge_admin === 'super_pro',
+              couleur: 'from-amber-500 to-orange-600',
+            },
+            {
+              emoji: '🏆',
+              label: 'Pionnier',
+              desc: 'Pour les 50 premiers inscrits',
+              actif: statut.pionnier,
+              couleur: 'from-yellow-500 to-amber-600',
+            },
+            {
+              emoji: '👑',
+              label: 'Pionnier Illustre',
+              desc: 'Badge VIP spécial de l\'admin',
+              actif: statut.pionnier_illustre,
+              couleur: 'from-red-500 to-pink-600',
+            },
+          ].map((b, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.35 + i * 0.05 }}
+              className={`p-4 rounded-2xl border-2 ${
+                b.actif
+                  ? `bg-gradient-to-br ${b.couleur} text-white border-transparent shadow-lg`
+                  : 'bg-slate-50 border-slate-200'
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <div className="text-3xl">{b.emoji}</div>
+                <div className="flex-1">
+                  <div
+                    className={`font-black mb-1 ${
+                      b.actif ? 'text-white' : 'text-slate-700'
+                    }`}
+                  >
+                    {b.label}
+                  </div>
+                  <p
+                    className={`text-xs ${
+                      b.actif ? 'text-white/90' : 'text-slate-500'
+                    }`}
+                  >
+                    {b.desc}
+                  </p>
+                  {b.actif && (
+                    <div className="mt-2 text-[10px] font-black bg-white/20 backdrop-blur-sm px-2 py-1 rounded-full inline-block">
+                      ✓ OBTENU
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
+
+      {/* Demander amélioration */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+        className="bg-gradient-to-br from-blue-50 to-emerald-50 rounded-3xl p-6 md:p-8 border-2 border-blue-200 shadow-xl"
+      >
+        <div className="flex items-start gap-4 mb-4">
+          <div className="text-4xl">💬</div>
+          <div className="flex-1">
+            <h3 className="font-black text-slate-900 mb-1">
+              Demander une amélioration
+            </h3>
+            <p className="text-sm text-slate-700 mb-3">
+              Vous pensez mériter plus d'étoiles ou un badge ? Envoyez-nous
+              votre demande avec un motif clair.
+            </p>
+            <button
+              onClick={() => setModalOuvert(true)}
+              className="bg-gradient-to-r from-blue-700 to-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-lg hover:shadow-xl transition-all"
+            >
+              📩 Faire une demande
+            </button>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Modal */}
+      {modalOuvert && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden"
+          >
+            <div className="bg-gradient-to-r from-blue-700 to-indigo-600 p-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-black text-white">
+                  📩 Demande d'amélioration
+                </h2>
+                <button
+                  onClick={() => setModalOuvert(false)}
+                  className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white text-xl"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6">
+              {succes ? (
+                <div className="text-center py-8">
+                  <div className="text-6xl mb-4">✅</div>
+                  <h3 className="text-xl font-black text-slate-900 mb-2">
+                    Demande envoyée
+                  </h3>
+                  <p className="text-sm text-slate-600 mb-4">
+                    Nous allons examiner votre demande et vous répondrons
+                    rapidement.
+                  </p>
+                  <button
+                    onClick={() => {
+                      setModalOuvert(false)
+                      setSucces(false)
+                    }}
+                    className="bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm"
+                  >
+                    Fermer
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="bg-blue-50 border-l-4 border-blue-500 p-3 rounded-xl mb-4">
+                    <p className="text-xs text-blue-800">
+                      💡 Votre demande sera examinée par l'admin. Soyez
+                      précis et convaincant !
+                    </p>
+                  </div>
+
+                  <label className="block text-sm font-bold text-slate-700 mb-2">
+                    Motif de votre demande{' '}
+                    <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    value={motif}
+                    onChange={(e) => setMotif(e.target.value)}
+                    rows={5}
+                    maxLength={500}
+                    placeholder="Ex : Je pense mériter le badge Recommandé car j'ai 30 avis positifs et 8 mois avec mes élèves..."
+                    className="w-full px-4 py-3 bg-white border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none"
+                  />
+                  <p className="text-xs text-slate-500 mt-1">
+                    {motif.length}/500 caractères (minimum 20)
+                  </p>
+
+                  {erreur && (
+                    <div className="mt-3 bg-red-50 border border-red-200 rounded-xl p-3 flex items-start gap-2">
+                      <span>⚠️</span>
+                      <p className="text-red-700 text-xs font-medium">
+                        {erreur}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="flex gap-3 mt-5">
+                    <button
+                      onClick={() => setModalOuvert(false)}
+                      disabled={envoi}
+                      className="flex-1 py-3 rounded-xl font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors disabled:opacity-50"
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      onClick={envoyerDemande}
+                      disabled={envoi}
+                      className="flex-1 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-blue-700 to-indigo-600 shadow-lg disabled:opacity-50"
+                    >
+                      {envoi ? '⏳...' : '📩 Envoyer'}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </div>
+  )
+}
