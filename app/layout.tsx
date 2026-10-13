@@ -81,7 +81,7 @@ export const metadata: Metadata = {
     canonical: baseUrl,
   },
   verification: {
-    google: "REMPLACE_PAR_TON_CODE_GOOGLE",
+    google: "kIrgf0PIKghzsLY6ttr8k1op8On3KmV4QnuFp9nOd70",
   },
   icons: {
     icon: "/favicon.ico",
