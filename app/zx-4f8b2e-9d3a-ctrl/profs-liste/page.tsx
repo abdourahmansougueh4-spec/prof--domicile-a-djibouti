@@ -695,7 +695,7 @@ export default function AdminProfsListe() {
 
                 <div className="flex gap-2">
                   <Link
-                    href={`/abdrhmn-zou_2022-2032/utilisateurs?id=${p.id}`}
+                    href={`/zx-4f8b2e-9d3a-ctrl/utilisateurs?id=${p.id}`}
                     className="flex-1 px-3 py-2 bg-blue-500/20 text-blue-300 rounded-xl font-bold text-xs border border-blue-500/30 text-center hover:bg-blue-500/30 transition-colors"
                   >
                     👁️ Voir
@@ -859,7 +859,7 @@ export default function AdminProfsListe() {
 
                   <div className="flex gap-2">
                     <Link
-                      href={`/abdrhmn-zou_2022-2032/utilisateurs?id=${p.id}`}
+                      href={`/zx-4f8b2e-9d3a-ctrl/utilisateurs?id=${p.id}`}
                       className="px-3 py-2 bg-blue-500/20 text-blue-300 rounded-xl font-bold text-xs border border-blue-500/30 hover:bg-blue-500/30 transition-colors"
                       title="Voir la fiche"
                     >

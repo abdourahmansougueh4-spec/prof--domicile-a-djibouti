@@ -17,54 +17,45 @@ const baseUrl = "https://prof-domicile-a-djibouti.vercel.app";
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
   title: {
-    default: "Prof À Domicile Djibouti | Professeurs particuliers vérifiés",
-    template: "%s | Prof À Domicile Djibouti",
+    default: "Djib Superprof | Professeurs vérifiés à Djibouti",
+    template: "%s | Djib Superprof",
   },
   description:
-    "Trouvez un professeur à domicile vérifié à Djibouti : soutien scolaire, Coran, langues, informatique, arts. Inscription gratuite, mise en relation en 24h.",
+    "Djib Superprof — Trouvez un professeur vérifié à Djibouti pour du soutien scolaire, Coran, langues, informatique, arts et plus. Inscription gratuite.",
   keywords: [
-    "djib tutors",
-    "professeurs à domicile Djibouti",
-    "prof à domicile",
-    "prof particulier Djibouti",
+    "djib superprof",
+    "djibsuperprof",
+    "professeur Djibouti",
+    "prof à domicile Djibouti",
     "cours particuliers Djibouti",
     "soutien scolaire Djibouti",
     "prof maths Djibouti",
     "prof Coran Djibouti",
     "prof arabe Djibouti",
     "prof anglais Djibouti",
-    "prof français Djibouti",
     "tuteur Djibouti",
-    "cours à domicile Djibouti",
     "professeur Balbala",
     "professeur Héron",
     "professeur Q1 Djibouti",
-    "professeur Centre-ville Djibouti",
   ],
-  authors: [{ name: "Prof À Domicile Djibouti" }],
-  creator: "Prof À Domicile Djibouti",
-  publisher: "Prof À Domicile Djibouti",
+  authors: [{ name: "Djib Superprof" }],
+  creator: "Djib Superprof",
+  publisher: "Djib Superprof",
   category: "education",
-  formatDetection: {
-    email: false,
-    address: false,
-    telephone: false,
-  },
   openGraph: {
     type: "website",
     locale: "fr_FR",
-    alternateLocale: "ar_DJ",
     url: baseUrl,
-    siteName: "Prof À Domicile Djibouti",
-    title: "Prof À Domicile Djibouti | Professeurs particuliers vérifiés",
+    siteName: "Djib Superprof",
+    title: "Djib Superprof | Professeurs vérifiés à Djibouti",
     description:
-      "Trouvez un professeur à domicile vérifié à Djibouti. Soutien scolaire, Coran, langues, informatique. Inscription gratuite.",
+      "Trouvez un professeur vérifié à Djibouti. Soutien scolaire, Coran, langues, informatique. Inscription gratuite.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Prof À Domicile Djibouti",
+    title: "Djib Superprof",
     description:
-      "Trouvez un professeur à domicile vérifié à Djibouti. Inscription gratuite.",
+      "Trouvez un professeur vérifié à Djibouti. Inscription gratuite.",
   },
   robots: {
     index: true,
@@ -83,23 +74,20 @@ export const metadata: Metadata = {
   verification: {
     google: "kIrgf0PIKghzsLY6ttr8k1op8On3KmV4QnuFp9nOd70",
   },
-  icons: {
-    icon: "/favicon.ico",
-  },
 };
 
 // ============================================================
-// BALISE STRUCTURÉE (SCHEMA.ORG) — SEO LOCAL
+// SCHEMA.ORG — SEO LOCAL
 // ============================================================
 
 const localBusinessSchema = {
   "@context": "https://schema.org",
   "@type": "EducationalOrganization",
-  name: "Prof À Domicile Djibouti",
-  alternateName: "Prof À Domicile",
+  name: "Djib Superprof",
+  alternateName: "DjibSuperprof",
   url: baseUrl,
   description:
-    "Plateforme de mise en relation entre parents et professeurs particuliers vérifiés à Djibouti. Soutien scolaire, Coran, langues, informatique.",
+    "Plateforme de mise en relation entre parents et professeurs particuliers vérifiés à Djibouti.",
   address: {
     "@type": "PostalAddress",
     addressLocality: "Djibouti",
@@ -115,21 +103,13 @@ const localBusinessSchema = {
     contactType: "customer service",
     availableLanguage: ["French", "Arabic", "Somali", "Afar", "English"],
   },
-  sameAs: [
-    "https://wa.me/25377741482",
-  ],
-  offers: {
-    "@type": "Offer",
-    price: "0",
-    priceCurrency: "DJF",
-    description: "Inscription gratuite pour les parents",
-  },
+  sameAs: ["https://wa.me/25377741482"],
 };
 
 const websiteSchema = {
   "@context": "https://schema.org",
   "@type": "WebSite",
-  name: "Prof À Domicile Djibouti",
+  name: "Djib Superprof",
   url: baseUrl,
   inLanguage: "fr-FR",
   potentialAction: {

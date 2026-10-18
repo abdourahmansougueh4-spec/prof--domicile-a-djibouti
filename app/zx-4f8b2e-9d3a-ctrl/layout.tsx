@@ -15,37 +15,37 @@ type MenuItem = {
 }
 
 const menu: MenuItem[] = [
-  { href: '/abdrhmn-zou_2022-2032', label: 'Tableau de bord', emoji: '📊', description: 'Vue d\'ensemble' },
-  { href: '/abdrhmn-zou_2022-2032/statistiques', label: 'Statistiques', emoji: '📈', description: 'Analyses détaillées' },
-  { href: '/abdrhmn-zou_2022-2032/utilisateurs', label: 'Utilisateurs', emoji: '🇩🇯', description: 'tous les utilisateurs' },
-  { href: '/abdrhmn-zou_2022-2032/profs-liste', label: 'Professeurs', emoji: '👨‍🏫', description: 'Tous les profs' },
-  { href: '/abdrhmn-zou_2022-2032/parents-liste', label: 'Parents', emoji: '👨‍👩‍👧', description: 'Tous les parents' },
-  { href: '/abdrhmn-zou_2022-2032/inscription-manuelle', label: 'Inscription manuelle', emoji: '➕', description: 'Créer prof/parent' },
-  { href: '/abdrhmn-zou_2022-2032/bannis', label: 'Bannis / Suspendus', emoji: '🚫', description: 'Gérer les sanctions' },
-  { href: '/abdrhmn-zou_2022-2032/profs', label: 'Validation Profs', emoji: '✅', description: 'Approuver / Refuser', badgeKey: 'en_attente' },
-  { href: '/abdrhmn-zou_2022-2032/documents', label: 'Documents à vérifier', emoji: '📎', description: 'Docs reçus', badgeKey: 'documents' },
-  { href: '/abdrhmn-zou_2022-2032/badges', label: 'Badges & Étoiles', emoji: '🏅', description: 'Donner / Retirer' },
-  { href: '/abdrhmn-zou_2022-2032/demandes-amelioration', label: 'Demandes amélioration', emoji: '📩', description: 'Valider / Refuser', badgeKey: 'demandes_amelioration' },
-  { href: '/abdrhmn-zou_2022-2032/demandes', label: 'Toutes les demandes', emoji: '📥', description: 'Vue globale' },
-  { href: '/abdrhmn-zou_2022-2032/demandes/en-attente', label: 'Demandes en attente', emoji: '⏳', description: 'À traiter', badgeKey: 'demandes_attente' },
-  { href: '/abdrhmn-zou_2022-2032/demandes/a-valider', label: 'Pré-acceptées (à valider)', emoji: '👍', description: 'Décision admin', badgeKey: 'demandes_pre_acceptees' },
-  { href: '/abdrhmn-zou_2022-2032/demandes/historique', label: 'Historique demandes', emoji: '📜', description: 'Archive' },
-  { href: '/abdrhmn-zou_2022-2032/paiements-parents', label: 'Paiements parents', emoji: '💰', description: 'Suivre + Valider', badgeKey: 'paiements_attente' },
-  { href: '/abdrhmn-zou_2022-2032/paiements-profs', label: 'Paiements profs', emoji: '💵', description: 'Frais plateforme' },
-  { href: '/abdrhmn-zou_2022-2032/revenus', label: 'Revenus mensuels', emoji: '📊', description: 'Chiffres' },
-  { href: '/abdrhmn-zou_2022-2032/tarifs', label: 'Tarifs Profs', emoji: '💵', description: 'Prix privés' },
-  { href: '/abdrhmn-zou_2022-2032/signalements', label: 'Signalements', emoji: '🚨', description: 'Traiter', badgeKey: 'signalements' },
-  { href: '/abdrhmn-zou_2022-2032/avis', label: 'Modération avis', emoji: '⭐', description: 'Publier / Supprimer', badgeKey: 'avis_signales' },
-  { href: '/abdrhmn-zou_2022-2032/messages', label: 'Messages signalés', emoji: '💬', description: 'Surveillance chat', badgeKey: 'messages_signales' },
-  { href: '/abdrhmn-zou_2022-2032/notifications', label: 'Notifications globales', emoji: '📢', description: 'Notifier tous' },
-  { href: '/abdrhmn-zou_2022-2032/annonces', label: 'Annonces du site', emoji: '📰', description: 'Bannières' },
-  { href: '/abdrhmn-zou_2022-2032/top-profs', label: 'Top profs', emoji: '🏆', description: 'Classements' },
-  { href: '/abdrhmn-zou_2022-2032/activite', label: 'Activité', emoji: '📉', description: 'En direct' },
-  { href: '/abdrhmn-zou_2022-2032/export', label: 'Export CSV', emoji: '📤', description: 'Données' },
-  { href: '/abdrhmn-zou_2022-2032/parametres', label: 'Paramètres généraux', emoji: '⚙️', description: 'Config du site' },
-  { href: '/abdrhmn-zou_2022-2032/contenu', label: 'Contenu du site', emoji: '📝', description: 'Modifier textes' },
-  { href: '/abdrhmn-zou_2022-2032/securite', label: 'Sécurité & Logs', emoji: '🔐', description: 'Traçabilité' },
-  { href: '/abdrhmn-zou_2022-2032/logs', label: 'Journal d\'activité', emoji: '📋', description: 'Historique complet' },
+  { href: '/zx-4f8b2e-9d3a-ctrl', label: 'Tableau de bord', emoji: '📊', description: 'Vue d\'ensemble' },
+  { href: '/zx-4f8b2e-9d3a-ctrl/statistiques', label: 'Statistiques', emoji: '📈', description: 'Analyses détaillées' },
+  { href: '/zx-4f8b2e-9d3a-ctrl/utilisateurs', label: 'Utilisateurs', emoji: '🇩🇯', description: 'tous les utilisateurs' },
+  { href: '/zx-4f8b2e-9d3a-ctrl/profs-liste', label: 'Professeurs', emoji: '👨‍🏫', description: 'Tous les profs' },
+  { href: '/zx-4f8b2e-9d3a-ctrl/parents-liste', label: 'Parents', emoji: '👨‍👩‍👧', description: 'Tous les parents' },
+  { href: '/zx-4f8b2e-9d3a-ctrl/inscription-manuelle', label: 'Inscription manuelle', emoji: '➕', description: 'Créer prof/parent' },
+  { href: '/zx-4f8b2e-9d3a-ctrl/bannis', label: 'Bannis / Suspendus', emoji: '🚫', description: 'Gérer les sanctions' },
+  { href: '/zx-4f8b2e-9d3a-ctrl/profs', label: 'Validation Profs', emoji: '✅', description: 'Approuver / Refuser', badgeKey: 'en_attente' },
+  { href: '/zx-4f8b2e-9d3a-ctrl/documents', label: 'Documents à vérifier', emoji: '📎', description: 'Docs reçus', badgeKey: 'documents' },
+  { href: '/zx-4f8b2e-9d3a-ctrl/badges', label: 'Badges & Étoiles', emoji: '🏅', description: 'Donner / Retirer' },
+  { href: '/zx-4f8b2e-9d3a-ctrl/demandes-amelioration', label: 'Demandes amélioration', emoji: '📩', description: 'Valider / Refuser', badgeKey: 'demandes_amelioration' },
+  { href: '/zx-4f8b2e-9d3a-ctrl/demandes', label: 'Toutes les demandes', emoji: '📥', description: 'Vue globale' },
+  { href: '/zx-4f8b2e-9d3a-ctrl/demandes/en-attente', label: 'Demandes en attente', emoji: '⏳', description: 'À traiter', badgeKey: 'demandes_attente' },
+  { href: '/zx-4f8b2e-9d3a-ctrl/demandes/a-valider', label: 'Pré-acceptées (à valider)', emoji: '👍', description: 'Décision admin', badgeKey: 'demandes_pre_acceptees' },
+  { href: '/zx-4f8b2e-9d3a-ctrl/demandes/historique', label: 'Historique demandes', emoji: '📜', description: 'Archive' },
+  { href: '/zx-4f8b2e-9d3a-ctrl/paiements-parents', label: 'Paiements parents', emoji: '💰', description: 'Suivre + Valider', badgeKey: 'paiements_attente' },
+  { href: '/zx-4f8b2e-9d3a-ctrl/paiements-profs', label: 'Paiements profs', emoji: '💵', description: 'Frais plateforme' },
+  { href: '/zx-4f8b2e-9d3a-ctrl/revenus', label: 'Revenus mensuels', emoji: '📊', description: 'Chiffres' },
+  { href: '/zx-4f8b2e-9d3a-ctrl/tarifs', label: 'Tarifs Profs', emoji: '💵', description: 'Prix privés' },
+  { href: '/zx-4f8b2e-9d3a-ctrl/signalements', label: 'Signalements', emoji: '🚨', description: 'Traiter', badgeKey: 'signalements' },
+  { href: '/zx-4f8b2e-9d3a-ctrl/avis', label: 'Modération avis', emoji: '⭐', description: 'Publier / Supprimer', badgeKey: 'avis_signales' },
+  { href: '/zx-4f8b2e-9d3a-ctrl/messages', label: 'Messages signalés', emoji: '💬', description: 'Surveillance chat', badgeKey: 'messages_signales' },
+  { href: '/zx-4f8b2e-9d3a-ctrl/notifications', label: 'Notifications globales', emoji: '📢', description: 'Notifier tous' },
+  { href: '/zx-4f8b2e-9d3a-ctrl/annonces', label: 'Annonces du site', emoji: '📰', description: 'Bannières' },
+  { href: '/zx-4f8b2e-9d3a-ctrl/top-profs', label: 'Top profs', emoji: '🏆', description: 'Classements' },
+  { href: '/zx-4f8b2e-9d3a-ctrl/activite', label: 'Activité', emoji: '📉', description: 'En direct' },
+  { href: '/zx-4f8b2e-9d3a-ctrl/export', label: 'Export CSV', emoji: '📤', description: 'Données' },
+  { href: '/zx-4f8b2e-9d3a-ctrl/parametres', label: 'Paramètres généraux', emoji: '⚙️', description: 'Config du site' },
+  { href: '/zx-4f8b2e-9d3a-ctrl/contenu', label: 'Contenu du site', emoji: '📝', description: 'Modifier textes' },
+  { href: '/zx-4f8b2e-9d3a-ctrl/securite', label: 'Sécurité & Logs', emoji: '🔐', description: 'Traçabilité' },
+  { href: '/zx-4f8b2e-9d3a-ctrl/logs', label: 'Journal d\'activité', emoji: '📋', description: 'Historique complet' },
 ]
 
 export default function AdminLayout({
@@ -80,7 +80,7 @@ export default function AdminLayout({
       const { data: { user: authUser } } = await supabase.auth.getUser()
 
       if (!authUser) {
-        router.push('/abdrhmn-zou_2022-2032/login')
+        router.push('/zx-4f8b2e-9d3a-ctrl/login')
         return
       }
 
@@ -92,7 +92,7 @@ export default function AdminLayout({
 
       if (!profile || profile.role !== 'admin' || !profile.est_admin) {
         await supabase.auth.signOut()
-        router.push('/abdrhmn-zou_2022-2032/login')
+        router.push('/zx-4f8b2e-9d3a-ctrl/login')
         return
       }
 
@@ -210,7 +210,7 @@ export default function AdminLayout({
 
   const deconnecter = async () => {
     await supabase.auth.signOut()
-    router.push('/abdrhmn-zou_2022-2032/login')
+    router.push('/zx-4f8b2e-9d3a-ctrl/login')
   }
 
   const getInitiales = (nom: string) => {
@@ -263,7 +263,7 @@ export default function AdminLayout({
       <nav className="relative z-30 backdrop-blur-md bg-slate-900/70 border-b border-white/10 sticky top-0">
         <div className="max-w-[1700px] mx-auto px-4 md:px-6 py-4 flex justify-between items-center">
           <Link
-            href="/abdrhmn-zou_2022-2032"
+            href="/zx-4f8b2e-9d3a-ctrl"
             className="flex items-center gap-2"
           >
             <span className="text-xl md:text-2xl font-black bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
@@ -400,7 +400,7 @@ export default function AdminLayout({
                 {menuFiltre.map((item) => {
                   const actif =
                     pathname === item.href ||
-                    (item.href !== '/abdrhmn-zou_2022-2032' &&
+                    (item.href !== '/zx-4f8b2e-9d3a-ctrl' &&
                       pathname?.startsWith(item.href))
                   const badge = item.badgeKey ? compteurs[item.badgeKey] : 0
 
@@ -493,7 +493,7 @@ export default function AdminLayout({
                     {menu.map((item) => {
                       const actif =
                         pathname === item.href ||
-                        (item.href !== '/abdrhmn-zou_2022-2032' &&
+                        (item.href !== '/zx-4f8b2e-9d3a-ctrl' &&
                           pathname?.startsWith(item.href))
                       const badge = item.badgeKey ? compteurs[item.badgeKey] : 0
 

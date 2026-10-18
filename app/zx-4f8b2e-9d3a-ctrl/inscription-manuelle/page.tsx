@@ -229,7 +229,7 @@ export default function InscriptionManuelle() {
   return (
     <div className="space-y-6">
       <Link
-        href="/abdrhmn-zou_2022-2032"
+        href="/zx-4f8b2e-9d3a-ctrl"
         className="text-sm text-slate-400 hover:text-purple-300 inline-flex items-center gap-1"
       >
         ← Retour au tableau de bord

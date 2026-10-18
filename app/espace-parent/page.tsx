@@ -90,10 +90,11 @@ const LABELS_STATUT: { [k: string]: { label: string; emoji: string; bg: string }
   acceptee: { label: 'Acceptée', emoji: '✅', bg: 'bg-emerald-100 text-emerald-800' },
   refusee: { label: 'Refusée', emoji: '❌', bg: 'bg-red-100 text-red-800' },
   pre_acceptee: { label: 'Intéressé', emoji: '👍', bg: 'bg-blue-100 text-blue-800' },
+  annulee: { label: 'Annulée', emoji: '🚫', bg: 'bg-slate-100 text-slate-700' },
 }
 
 // ============================================================
-// HELPER : Salutation
+// HELPERS
 // ============================================================
 
 const getSalutation = (): { texte: string; emoji: string } => {
@@ -102,10 +103,6 @@ const getSalutation = (): { texte: string; emoji: string } => {
   if (h < 18) return { texte: 'Bon après-midi', emoji: '🌤️' }
   return { texte: 'Bonsoir', emoji: '🌙' }
 }
-
-// ============================================================
-// HELPER : Format date relative
-// ============================================================
 
 const formaterDate = (date: string): string => {
   const d = new Date(date)
@@ -120,10 +117,6 @@ const formaterDate = (date: string): string => {
   return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
-// ============================================================
-// HELPER : Coach IA — Actions prioritaires
-// ============================================================
-
 const genererActions = (
   profil: Profil | null,
   stats: Stats,
@@ -131,7 +124,6 @@ const genererActions = (
 ): ActionPrioritaire[] => {
   const actions: ActionPrioritaire[] = []
 
-  // Profil incomplet
   if (!profil?.telephone || profil.telephone.length < 10) {
     actions.push({
       emoji: '📞',
@@ -143,7 +135,6 @@ const genererActions = (
     })
   }
 
-  // Pas d'enfants
   if (stats.enfants === 0) {
     actions.push({
       emoji: '👨‍👩‍👧',
@@ -155,7 +146,6 @@ const genererActions = (
     })
   }
 
-  // Pas de demande
   if (stats.demandes_total === 0 && stats.enfants > 0) {
     actions.push({
       emoji: '🔍',
@@ -167,7 +157,6 @@ const genererActions = (
     })
   }
 
-  // Demandes en attente
   if (stats.demandes_attente > 0) {
     actions.push({
       emoji: '⏳',
@@ -179,7 +168,6 @@ const genererActions = (
     })
   }
 
-  // Paiements en attente
   if (stats.paiements_attente > 0) {
     actions.push({
       emoji: '💳',
@@ -191,7 +179,6 @@ const genererActions = (
     })
   }
 
-  // Avis à laisser
   if (stats.profs_actifs > 0 && stats.avis_total < stats.profs_actifs) {
     const manquants = stats.profs_actifs - stats.avis_total
     actions.push({
@@ -204,7 +191,6 @@ const genererActions = (
     })
   }
 
-  // Profs sans suivi récent
   if (profs.length > 0) {
     actions.push({
       emoji: '📊',
@@ -233,13 +219,7 @@ const genererActions = (
   }).slice(0, 4)
 }
 
-// ============================================================
-// HELPER : Calculer activité 7 jours
-// ============================================================
-
-const calculerActivite = (
-  demandesDates: string[]
-): ActiviteJour[] => {
+const calculerActivite = (demandesDates: string[]): ActiviteJour[] => {
   const jours: ActiviteJour[] = []
   const now = new Date()
 
@@ -272,7 +252,6 @@ const calculerActivite = (
 export default function DashboardParent() {
   const supabase = createClient()
 
-  // ---- ÉTATS ----
   const [profil, setProfil] = useState<Profil | null>(null)
   const [stats, setStats] = useState<Stats>({
     enfants: 0,
@@ -336,7 +315,7 @@ export default function DashboardParent() {
         masque: profileData.masque === true,
       })
 
-      // 2. Toutes les stats en parallèle
+      // 2. Stats en parallèle
       const [
         enfantsRes,
         demandesRes,
@@ -356,15 +335,22 @@ export default function DashboardParent() {
       const avis = avisRes.data || []
       const notifs = notifsRes.data || []
 
-      // Enfants
       setEnfants(enfantsRes.data || [])
 
-      // Demandes acceptées = profs actifs
+      // Demandes acceptées
       const acceptees = demandes.filter((d) => d.statut === 'acceptee')
+
+      // ✅ DÉDUPLIQUER les profs par ID
+      const profsUniques = new Map<string, any>()
+      acceptees.forEach((d) => {
+        if (!profsUniques.has(d.professeur_id)) {
+          profsUniques.set(d.professeur_id, d)
+        }
+      })
 
       // Charger infos profs actifs
       const profsList: ProfActif[] = []
-      for (const d of acceptees) {
+      for (const d of Array.from(profsUniques.values())) {
         const { data: prof } = await supabase
           .from('profiles')
           .select('nom_complet, photo_url')
@@ -389,9 +375,18 @@ export default function DashboardParent() {
       }
       setProfsActifs(profsList)
 
+      // ✅ DÉDUPLIQUER les demandes récentes (pour ne pas voir 2 fois le même prof)
+      const demandesUniques = new Map<string, any>()
+      demandes.forEach((d) => {
+        const key = `${d.professeur_id}-${d.statut}`
+        if (!demandesUniques.has(key)) {
+          demandesUniques.set(key, d)
+        }
+      })
+
       // Demandes récentes (5)
       const recents: DemandeRecente[] = []
-      for (const d of demandes.slice(0, 5)) {
+      for (const d of Array.from(demandesUniques.values()).slice(0, 5)) {
         const { data: prof } = await supabase
           .from('profiles')
           .select('nom_complet, photo_url')
@@ -408,7 +403,7 @@ export default function DashboardParent() {
       }
       setDemandesRecentes(recents)
 
-      // Notifications non lues
+      // Notifications
       setNotifications(notifs.filter((n) => !n.lu).slice(0, 3))
 
       // Activité 7 jours
@@ -420,7 +415,7 @@ export default function DashboardParent() {
         demandes_total: demandes.length,
         demandes_attente: demandes.filter((d) => d.statut === 'en_attente').length,
         demandes_acceptees: acceptees.length,
-        profs_actifs: acceptees.length,
+        profs_actifs: profsList.length,
         paiements_total: paiements.length,
         paiements_attente: paiements.filter((p) => p.statut === 'en_attente').length,
         avis_total: avis.length,
@@ -452,10 +447,6 @@ export default function DashboardParent() {
     [activite]
   )
 
-  // ============================================================
-  // UTILITAIRES
-  // ============================================================
-
   const getInitiales = (nom: string) => {
     return nom
       .split(' ')
@@ -482,16 +473,12 @@ export default function DashboardParent() {
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-          className="w-14 h-14 border-4 border-blue-700 border-t-transparent rounded-full"
+          className="w-12 h-12 border-3 border-slate-900 border-t-transparent rounded-full"
         />
-        <p className="text-slate-500 text-sm font-medium">Chargement de votre espace...</p>
+        <p className="text-slate-500 text-sm font-medium">Chargement...</p>
       </div>
     )
   }
-
-  // ============================================================
-  // RENDU — ERREUR
-  // ============================================================
 
   if (erreur || !profil) {
     return (
@@ -499,16 +486,16 @@ export default function DashboardParent() {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-red-50 border-2 border-red-200 rounded-3xl p-8 max-w-md text-center"
+          className="bg-rose-50 border border-rose-200 rounded-2xl p-6 sm:p-8 max-w-md text-center"
         >
-          <div className="text-6xl mb-4">⚠️</div>
-          <h2 className="text-xl font-black text-slate-900 mb-2">Erreur</h2>
-          <p className="text-red-700 text-sm mb-6">{erreur || 'Impossible de charger vos données'}</p>
+          <div className="text-5xl mb-4">⚠️</div>
+          <h2 className="text-lg sm:text-xl font-black text-slate-900 mb-2">Erreur</h2>
+          <p className="text-rose-700 text-sm mb-6">{erreur || 'Impossible de charger'}</p>
           <button
             onClick={charger}
-            className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl font-bold text-sm shadow-lg"
+            className="px-5 py-3 bg-slate-900 text-white rounded-xl font-bold text-sm"
           >
-            🔄 Réessayer
+            Réessayer
           </button>
         </motion.div>
       </div>
@@ -520,82 +507,64 @@ export default function DashboardParent() {
   // ============================================================
 
   return (
-    <div className="space-y-6 pb-10">
-      {/* ============================================================ */}
-      {/* HEADER HERO */}
-      {/* ============================================================ */}
+    <div className="space-y-4 sm:space-y-5 md:space-y-6 pb-10">
 
+      {/* HERO */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-br from-blue-700 via-indigo-600 to-purple-700 rounded-3xl p-6 md:p-8 shadow-2xl text-white relative overflow-hidden"
+        className="bg-gradient-to-br from-blue-700 via-indigo-600 to-purple-700 rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-xl text-white relative overflow-hidden"
       >
-        <motion.div
-          className="absolute top-[-50px] right-[-50px] w-64 h-64 bg-white/10 rounded-full blur-3xl"
-          animate={{ x: [0, 30, 0], y: [0, -30, 0] }}
-          transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
-        />
-        <motion.div
-          className="absolute bottom-[-60px] left-[-60px] w-56 h-56 bg-white/10 rounded-full blur-3xl"
-          animate={{ x: [0, -20, 0], y: [0, 20, 0] }}
-          transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
-        />
-
         <div className="relative z-10">
-          <div className="flex items-center gap-4 flex-wrap mb-5">
-            <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-3xl border-2 border-white/30 flex-shrink-0">
+          <div className="flex items-center gap-3 sm:gap-4 flex-wrap mb-4 sm:mb-5">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-2xl sm:text-3xl border-2 border-white/30 flex-shrink-0 overflow-hidden">
               {profil.photo_url ? (
                 <img
                   src={profil.photo_url}
                   alt={profil.nom_complet}
-                  className="w-full h-full rounded-2xl object-cover"
+                  className="w-full h-full object-cover"
                 />
               ) : (
                 <span className="font-black">{getInitiales(profil.nom_complet)}</span>
               )}
             </div>
             <div className="flex-1 min-w-[200px]">
-              <div className="text-xs font-bold uppercase tracking-wider mb-1 opacity-90">
+              <div className="text-[10px] sm:text-xs font-bold uppercase tracking-wider mb-1 opacity-90">
                 {salutation.emoji} Espace parent
               </div>
-              <h1 className="text-2xl md:text-3xl font-black">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-black leading-tight">
                 {salutation.texte}, {profil.prenom} !
               </h1>
               {profil.quartier && (
-                <p className="text-xs text-blue-100 mt-1">📍 {profil.quartier}</p>
+                <p className="text-[11px] sm:text-xs text-blue-100 mt-1">📍 {profil.quartier}</p>
               )}
             </div>
           </div>
 
           {stats.notifications_non_lues > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-amber-500/20 backdrop-blur-sm border-2 border-amber-300/40 rounded-2xl p-3 mb-4"
-            >
+            <div className="bg-amber-500/20 backdrop-blur-sm border border-amber-300/40 rounded-xl sm:rounded-2xl p-3 mb-4">
               <div className="flex items-center gap-3">
-                <span className="text-2xl animate-pulse">🔔</span>
+                <span className="text-xl sm:text-2xl">🔔</span>
                 <div>
-                  <div className="font-black text-sm">
+                  <div className="font-bold text-xs sm:text-sm">
                     {stats.notifications_non_lues} nouvelle{stats.notifications_non_lues > 1 ? 's' : ''} notification{stats.notifications_non_lues > 1 ? 's' : ''}
                   </div>
-                  <div className="text-xs text-amber-100">Consultez vos notifications</div>
+                  <div className="text-[10px] sm:text-xs text-amber-100">Consultez vos notifications</div>
                 </div>
               </div>
-            </motion.div>
+            </div>
           )}
 
-          {/* Actions rapides dans le hero */}
           <div className="flex flex-wrap gap-2">
             <Link
               href="/espace-parent/recherche"
-              className="bg-white text-blue-700 px-4 py-2.5 rounded-xl font-bold text-sm shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
+              className="bg-white text-blue-700 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm shadow-lg active:scale-95 transition-transform flex items-center gap-2"
             >
               🔍 Trouver un prof
             </Link>
             <Link
               href="/espace-parent/enfants"
-              className="bg-white/20 backdrop-blur-sm text-white px-4 py-2.5 rounded-xl font-bold text-sm border border-white/30 hover:bg-white/30 transition-all flex items-center gap-2"
+              className="bg-white/20 backdrop-blur-sm text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm border border-white/30 active:scale-95 transition-transform flex items-center gap-2"
             >
               👨‍👩‍👧 Mes enfants
             </Link>
@@ -603,60 +572,15 @@ export default function DashboardParent() {
         </div>
       </motion.div>
 
-      {/* ============================================================ */}
-      {/* 6 KPI ANIMÉS */}
-      {/* ============================================================ */}
-
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      {/* 6 KPI */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
         {[
-          {
-            label: 'Enfants',
-            valeur: stats.enfants,
-            emoji: '👨‍👩‍👧',
-            couleur: 'from-blue-500 to-blue-600',
-            href: '/espace-parent/enfants',
-            alerte: stats.enfants === 0 ? 'À ajouter' : null,
-          },
-          {
-            label: 'Demandes',
-            valeur: stats.demandes_total,
-            emoji: '📤',
-            couleur: 'from-indigo-500 to-indigo-600',
-            href: '/espace-parent/demandes',
-            alerte: stats.demandes_attente > 0 ? `${stats.demandes_attente} en attente` : null,
-          },
-          {
-            label: 'Profs actifs',
-            valeur: stats.profs_actifs,
-            emoji: '👨‍🏫',
-            couleur: 'from-emerald-500 to-teal-600',
-            href: '/espace-parent/mes-profs',
-            alerte: null,
-          },
-          {
-            label: 'Paiements',
-            valeur: stats.paiements_total,
-            emoji: '💳',
-            couleur: 'from-amber-500 to-orange-600',
-            href: '/espace-parent/demandes',
-            alerte: stats.paiements_attente > 0 ? `${stats.paiements_attente} en attente` : null,
-          },
-          {
-            label: 'Avis laissés',
-            valeur: stats.avis_total,
-            emoji: '⭐',
-            couleur: 'from-yellow-500 to-amber-600',
-            href: '/espace-parent/avis',
-            alerte: stats.profs_actifs > stats.avis_total ? 'À noter' : null,
-          },
-          {
-            label: 'Notifs',
-            valeur: stats.notifications_non_lues,
-            emoji: '🔔',
-            couleur: 'from-pink-500 to-rose-600',
-            href: '/espace-parent',
-            alerte: stats.notifications_non_lues > 0 ? 'Nouveau' : null,
-          },
+          { label: 'Enfants', valeur: stats.enfants, emoji: '👨‍👩‍👧', couleur: 'from-blue-500 to-blue-600', href: '/espace-parent/enfants', alerte: stats.enfants === 0 ? 'À ajouter' : null },
+          { label: 'Demandes', valeur: stats.demandes_total, emoji: '📤', couleur: 'from-indigo-500 to-indigo-600', href: '/espace-parent/demandes', alerte: stats.demandes_attente > 0 ? stats.demandes_attente : null },
+          { label: 'Profs actifs', valeur: stats.profs_actifs, emoji: '👨‍🏫', couleur: 'from-emerald-500 to-teal-600', href: '/espace-parent/mes-profs', alerte: null },
+          { label: 'Paiements', valeur: stats.paiements_total, emoji: '💳', couleur: 'from-amber-500 to-orange-600', href: '/espace-parent/demandes', alerte: stats.paiements_attente > 0 ? stats.paiements_attente : null },
+          { label: 'Avis', valeur: stats.avis_total, emoji: '⭐', couleur: 'from-yellow-500 to-amber-600', href: '/espace-parent/avis', alerte: null },
+          { label: 'Notifs', valeur: stats.notifications_non_lues, emoji: '🔔', couleur: 'from-pink-500 to-rose-600', href: '/espace-parent', alerte: stats.notifications_non_lues > 0 ? '!' : null },
         ].map((s, i) => (
           <motion.div
             key={s.label}
@@ -665,18 +589,18 @@ export default function DashboardParent() {
             transition={{ duration: 0.4, delay: 0.1 + i * 0.05 }}
           >
             <Link href={s.href}>
-              <div className="bg-white/80 backdrop-blur-xl rounded-2xl p-4 border border-white/80 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all relative overflow-hidden">
-                <div
-                  className={`w-10 h-10 rounded-xl bg-gradient-to-br ${s.couleur} flex items-center justify-center text-white text-lg shadow-lg mb-2`}
-                >
+              <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-slate-200 shadow-sm active:scale-95 transition-transform relative">
+                <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br ${s.couleur} flex items-center justify-center text-white text-lg sm:text-xl shadow-md mb-2`}>
                   {s.emoji}
                 </div>
-                <div className="text-2xl font-black text-slate-900 mb-1">{s.valeur}</div>
+                <div className="text-xl sm:text-2xl font-black text-slate-900 mb-0.5">
+                  {s.valeur}
+                </div>
                 <div className="text-[10px] text-slate-500 font-bold uppercase">
                   {s.label}
                 </div>
                 {s.alerte && (
-                  <div className="absolute top-2 right-2 text-[9px] bg-red-500 text-white px-2 py-0.5 rounded-full font-black">
+                  <div className="absolute top-2 right-2 text-[9px] bg-rose-500 text-white px-1.5 py-0.5 rounded-full font-bold">
                     {s.alerte}
                   </div>
                 )}
@@ -686,87 +610,71 @@ export default function DashboardParent() {
         ))}
       </div>
 
-      {/* ============================================================ */}
-      {/* COACH IA — ACTIONS PRIORITAIRES */}
-      {/* ============================================================ */}
-
+      {/* COACH IA */}
       {actions.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-3xl p-6 border-2 border-purple-200 shadow-xl"
+          className="bg-purple-50 rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-purple-200"
         >
-          <div className="flex items-center gap-3 mb-5">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center text-white text-2xl shadow-lg">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-purple-500 flex items-center justify-center text-white text-xl sm:text-2xl">
               🤖
             </div>
             <div>
-              <h3 className="font-black text-slate-900 text-lg">Coach IA</h3>
-              <p className="text-xs text-slate-500">
-                Actions recommandées pour progresser
-              </p>
+              <h3 className="font-bold text-slate-900 text-sm sm:text-base">Coach IA</h3>
+              <p className="text-[11px] text-slate-500">Actions recommandées</p>
             </div>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-3">
+          <div className="grid md:grid-cols-2 gap-2 sm:gap-3">
             {actions.map((a, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.35 + i * 0.05 }}
-              >
-                <Link href={a.href}>
+              <Link key={i} href={a.href}>
+                <div
+                  className={`rounded-xl sm:rounded-2xl p-3 sm:p-4 border flex items-start gap-3 active:scale-95 transition-transform ${
+                    a.priorite === 'haute'
+                      ? 'bg-rose-50 border-rose-200'
+                      : a.priorite === 'moyenne'
+                      ? 'bg-amber-50 border-amber-200'
+                      : 'bg-white border-purple-100'
+                  }`}
+                >
                   <div
-                    className={`rounded-2xl p-4 border-2 flex items-start gap-3 transition-all hover:-translate-y-1 ${
-                      a.priorite === 'haute'
-                        ? 'bg-red-50 border-red-200 hover:border-red-400'
-                        : a.priorite === 'moyenne'
-                        ? 'bg-amber-50 border-amber-200 hover:border-amber-400'
-                        : 'bg-white border-purple-100 hover:border-purple-300'
-                    }`}
+                    className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-br ${a.couleur} flex items-center justify-center text-white text-lg sm:text-2xl flex-shrink-0`}
                   >
-                    <div
-                      className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${a.couleur} flex items-center justify-center text-white text-2xl shadow-lg flex-shrink-0`}
-                    >
-                      {a.emoji}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-black text-slate-900 text-sm mb-1">
-                        {a.titre}
-                      </div>
-                      <div className="text-xs text-slate-600 leading-relaxed">
-                        {a.desc}
-                      </div>
-                    </div>
-                    <span className="text-slate-400 flex-shrink-0">→</span>
+                    {a.emoji}
                   </div>
-                </Link>
-              </motion.div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-bold text-slate-900 text-xs sm:text-sm mb-1">
+                      {a.titre}
+                    </div>
+                    <div className="text-[11px] sm:text-xs text-slate-600 leading-relaxed">
+                      {a.desc}
+                    </div>
+                  </div>
+                </div>
+              </Link>
             ))}
           </div>
         </motion.div>
       )}
 
-      {/* ============================================================ */}
-      {/* PROFILS DES PROFS ACTIFS */}
-      {/* ============================================================ */}
-
+      {/* PROFS ACTIFS */}
       {profsActifs.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 border border-white/80 shadow-xl"
+          className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-200"
         >
-          <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
+          <div className="flex items-center justify-between mb-4 sm:mb-5 gap-3 flex-wrap">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white text-xl shadow-lg">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white text-lg sm:text-xl">
                 👨‍🏫
               </div>
               <div>
-                <h3 className="font-black text-slate-900">
+                <h3 className="font-bold text-slate-900 text-sm sm:text-base">
                   Mes profs actifs ({profsActifs.length})
                 </h3>
                 <p className="text-[10px] text-slate-500">
@@ -776,38 +684,35 @@ export default function DashboardParent() {
             </div>
             <Link
               href="/espace-parent/mes-profs"
-              className="text-xs font-bold text-blue-700 hover:text-blue-800"
+              className="text-[11px] sm:text-xs font-bold text-blue-700 hover:text-blue-800"
             >
               Voir tout →
             </Link>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
             {profsActifs.slice(0, 3).map((p) => (
               <Link key={p.id} href={`/espace-parent/profils/${p.id}`}>
-                <motion.div
-                  whileHover={{ y: -3 }}
-                  className="bg-gradient-to-br from-slate-50 to-white rounded-2xl p-4 border-2 border-slate-100 hover:border-emerald-300 transition-all"
-                >
+                <div className="bg-slate-50 rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-slate-200 active:scale-95 transition-transform">
                   <div className="flex items-center gap-3 mb-3">
                     {p.photo_url ? (
                       <img
                         src={p.photo_url}
                         alt={p.nom_complet}
-                        className="w-12 h-12 rounded-2xl object-cover shadow-md"
+                        className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl object-cover"
                       />
                     ) : (
                       <div
-                        className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${getCouleurAvatar(p.etoiles)} flex items-center justify-center text-white text-xl shadow-md`}
+                        className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-br ${getCouleurAvatar(p.etoiles)} flex items-center justify-center text-white text-lg sm:text-xl`}
                       >
                         👨‍🏫
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <div className="font-black text-slate-900 text-sm truncate">
+                      <div className="font-bold text-slate-900 text-xs sm:text-sm truncate">
                         {p.nom_complet}
                       </div>
-                      <div className="flex items-center gap-2 text-[10px] text-slate-500">
+                      <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
                         {p.etoiles > 0 && (
                           <span className="text-amber-500">{'⭐'.repeat(p.etoiles)}</span>
                         )}
@@ -819,43 +724,40 @@ export default function DashboardParent() {
                       </div>
                     </div>
                   </div>
-                  <div className="text-[10px] text-slate-500">
+                  <div className="text-[10px] text-slate-500 truncate">
                     📚 {p.matiere || 'Plusieurs matières'}
                   </div>
                   <div className="text-[10px] text-emerald-700 font-bold mt-1">
                     ✓ Depuis {new Date(p.depuis).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
                   </div>
-                </motion.div>
+                </div>
               </Link>
             ))}
           </div>
         </motion.div>
       )}
 
-      {/* ============================================================ */}
       {/* DEMANDES RÉCENTES */}
-      {/* ============================================================ */}
-
       {demandesRecentes.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.45 }}
-          className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 border border-white/80 shadow-xl"
+          className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-200"
         >
-          <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
+          <div className="flex items-center justify-between mb-4 sm:mb-5 gap-3 flex-wrap">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xl shadow-lg">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-lg sm:text-xl">
                 📤
               </div>
               <div>
-                <h3 className="font-black text-slate-900">Demandes récentes</h3>
-                <p className="text-[10px] text-slate-500">Vos 5 dernières demandes</p>
+                <h3 className="font-bold text-slate-900 text-sm sm:text-base">Demandes récentes</h3>
+                <p className="text-[10px] text-slate-500">Vos dernières demandes</p>
               </div>
             </div>
             <Link
               href="/espace-parent/demandes"
-              className="text-xs font-bold text-blue-700 hover:text-blue-800"
+              className="text-[11px] sm:text-xs font-bold text-blue-700"
             >
               Voir tout →
             </Link>
@@ -865,82 +767,73 @@ export default function DashboardParent() {
             {demandesRecentes.map((d, i) => {
               const statut = LABELS_STATUT[d.statut] || LABELS_STATUT.en_attente
               return (
-                <motion.div
-                  key={d.id}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.5 + i * 0.04 }}
-                  className="bg-slate-50 rounded-xl p-3 border border-slate-200 flex items-center gap-3 flex-wrap"
+                <div
+                  key={`${d.id}-${i}`}
+                  className="bg-slate-50 rounded-xl p-3 border border-slate-200 flex items-center gap-3"
                 >
                   {d.prof_photo ? (
                     <img
                       src={d.prof_photo}
                       alt={d.prof_nom}
-                      className="w-10 h-10 rounded-xl object-cover flex-shrink-0"
+                      className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl object-cover flex-shrink-0"
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-lg flex-shrink-0">
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-base sm:text-lg flex-shrink-0">
                       👨‍🏫
                     </div>
                   )}
-                  <div className="flex-1 min-w-[150px]">
-                    <div className="font-bold text-slate-900 text-sm">{d.prof_nom}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-bold text-slate-900 text-xs sm:text-sm truncate">{d.prof_nom}</div>
                     <div className="text-[10px] text-slate-500">{formaterDate(d.created_at)}</div>
                   </div>
-                  <span
-                    className={`text-[10px] px-2.5 py-1 rounded-full font-black ${statut.bg}`}
-                  >
+                  <span className={`text-[9px] sm:text-[10px] px-2 py-1 rounded-full font-bold flex-shrink-0 ${statut.bg}`}>
                     {statut.emoji} {statut.label}
                   </span>
-                </motion.div>
+                </div>
               )
             })}
           </div>
         </motion.div>
       )}
 
-      {/* ============================================================ */}
       {/* MES ENFANTS */}
-      {/* ============================================================ */}
-
       {enfants.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 border border-white/80 shadow-xl"
+          className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-200"
         >
-          <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
+          <div className="flex items-center justify-between mb-4 sm:mb-5 gap-3 flex-wrap">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center text-white text-xl shadow-lg">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center text-white text-lg sm:text-xl">
                 👨‍👩‍👧
               </div>
               <div>
-                <h3 className="font-black text-slate-900">Mes enfants</h3>
+                <h3 className="font-bold text-slate-900 text-sm sm:text-base">Mes enfants</h3>
                 <p className="text-[10px] text-slate-500">
-                  {enfants.length} enfant{enfants.length > 1 ? 's' : ''} enregistré{enfants.length > 1 ? 's' : ''}
+                  {enfants.length} enfant{enfants.length > 1 ? 's' : ''}
                 </p>
               </div>
             </div>
             <Link
               href="/espace-parent/enfants"
-              className="text-xs font-bold text-blue-700 hover:text-blue-800"
+              className="text-[11px] sm:text-xs font-bold text-blue-700"
             >
               Gérer →
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
             {enfants.map((e) => (
-              <motion.div
+              <div
                 key={e.id}
-                whileHover={{ y: -3 }}
-                className="bg-gradient-to-br from-pink-50 to-purple-50 rounded-2xl p-4 border border-pink-100 text-center"
+                className="bg-pink-50 rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-pink-100 text-center"
               >
-                <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center text-white text-xl shadow-lg">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center text-white text-lg sm:text-xl">
                   👦
                 </div>
-                <div className="font-black text-slate-900 text-sm truncate mb-1">
+                <div className="font-bold text-slate-900 text-xs sm:text-sm truncate mb-1">
                   {e.prenom}
                 </div>
                 <div className="text-[10px] text-slate-500">
@@ -950,53 +843,34 @@ export default function DashboardParent() {
                     ? e.niveaux.slice(0, 2).join(', ')
                     : 'Niveau non défini'}
                 </div>
-              </motion.div>
+              </div>
             ))}
           </div>
-
-          {enfants.length === 0 && (
-            <Link href="/espace-parent/enfants">
-              <div className="bg-blue-50 border-2 border-dashed border-blue-300 rounded-2xl p-6 text-center hover:bg-blue-100 transition-all">
-                <div className="text-4xl mb-2">➕</div>
-                <div className="font-black text-blue-900 text-sm mb-1">
-                  Ajouter mon premier enfant
-                </div>
-                <div className="text-[10px] text-blue-700">
-                  Pour trouver les profs adaptés
-                </div>
-              </div>
-            </Link>
-          )}
         </motion.div>
       )}
 
-      {/* ============================================================ */}
-      {/* GRAPHIQUE ACTIVITÉ 7 JOURS */}
-      {/* ============================================================ */}
-
+      {/* ACTIVITÉ 7 JOURS */}
       {stats.demandes_total > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.55 }}
-          className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 border border-white/80 shadow-xl"
+          className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-200"
         >
-          <div className="flex items-center gap-3 mb-5">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white text-xl shadow-lg">
+          <div className="flex items-center gap-3 mb-4 sm:mb-5">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white text-lg sm:text-xl">
               📊
             </div>
             <div>
-              <h3 className="font-black text-slate-900">Activité (7 derniers jours)</h3>
-              <p className="text-[10px] text-slate-500">
-                Demandes envoyées par jour
-              </p>
+              <h3 className="font-bold text-slate-900 text-sm sm:text-base">Activité (7 jours)</h3>
+              <p className="text-[10px] text-slate-500">Demandes envoyées</p>
             </div>
           </div>
 
-          <div className="flex items-end justify-between gap-2 h-32">
+          <div className="flex items-end justify-between gap-1 sm:gap-2 h-24 sm:h-32">
             {activite.map((a, i) => (
               <div key={i} className="flex-1 flex flex-col items-center group">
-                <div className="text-[9px] text-slate-500 font-black mb-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="text-[9px] text-slate-500 font-bold mb-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   {a.count}
                 </div>
                 <motion.div
@@ -1010,7 +884,6 @@ export default function DashboardParent() {
                       ? 'bg-gradient-to-t from-cyan-500 to-blue-400'
                       : 'bg-slate-200'
                   }`}
-                  title={`${a.count} demande(s)`}
                 />
                 <div className="text-[9px] text-slate-400 font-bold mt-1 capitalize">
                   {a.label}
@@ -1021,23 +894,20 @@ export default function DashboardParent() {
         </motion.div>
       )}
 
-      {/* ============================================================ */}
-      {/* NOTIFICATIONS RÉCENTES */}
-      {/* ============================================================ */}
-
+      {/* NOTIFICATIONS */}
       {notifications.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
-          className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-3xl p-6 border-2 border-amber-200 shadow-xl"
+          className="bg-amber-50 rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-amber-200"
         >
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white text-xl shadow-lg">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white text-lg sm:text-xl">
               🔔
             </div>
             <div>
-              <h3 className="font-black text-slate-900">Notifications récentes</h3>
+              <h3 className="font-bold text-slate-900 text-sm sm:text-base">Notifications</h3>
               <p className="text-[10px] text-slate-500">
                 {notifications.length} non lue{notifications.length > 1 ? 's' : ''}
               </p>
@@ -1045,17 +915,17 @@ export default function DashboardParent() {
           </div>
 
           <div className="space-y-2">
-            {notifications.map((n) => (
+            {notifications.map((n, i) => (
               <div
-                key={n.id}
+                key={`${n.id}-${i}`}
                 className="bg-white rounded-xl p-3 border border-amber-200 flex items-start gap-3"
               >
-                <div className="w-2 h-2 rounded-full bg-amber-500 mt-2 flex-shrink-0 animate-pulse" />
+                <div className="w-2 h-2 rounded-full bg-amber-500 mt-2 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <div className="font-bold text-slate-900 text-sm truncate">
+                  <div className="font-bold text-slate-900 text-xs sm:text-sm truncate">
                     {n.titre}
                   </div>
-                  <div className="text-xs text-slate-600 line-clamp-2">
+                  <div className="text-[11px] text-slate-600 line-clamp-2">
                     {n.contenu}
                   </div>
                   <div className="text-[10px] text-slate-500 mt-1">
@@ -1068,27 +938,24 @@ export default function DashboardParent() {
         </motion.div>
       )}
 
-      {/* ============================================================ */}
       {/* ACTIONS RAPIDES */}
-      {/* ============================================================ */}
-
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.65 }}
-        className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 border border-white/80 shadow-xl"
+        className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-200"
       >
-        <div className="flex items-center gap-3 mb-5">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xl shadow-lg">
+        <div className="flex items-center gap-3 mb-4 sm:mb-5">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-lg sm:text-xl">
             ⚡
           </div>
           <div>
-            <h3 className="font-black text-slate-900">Actions rapides</h3>
-            <p className="text-[10px] text-slate-500">Accès direct aux fonctions clés</p>
+            <h3 className="font-bold text-slate-900 text-sm sm:text-base">Actions rapides</h3>
+            <p className="text-[10px] text-slate-500">Accès direct</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3">
           {[
             { href: '/espace-parent/recherche', label: 'Trouver un prof', emoji: '🔍', couleur: 'from-blue-500 to-blue-600' },
             { href: '/espace-parent/enfants', label: 'Mes enfants', emoji: '👨‍👩‍👧', couleur: 'from-pink-500 to-rose-600' },
@@ -1099,105 +966,82 @@ export default function DashboardParent() {
             { href: '/espace-parent/profil', label: 'Mon profil', emoji: '👤', couleur: 'from-cyan-500 to-blue-600' },
             { href: '/espace-parent/charte-qualite', label: 'Charte qualité', emoji: '📜', couleur: 'from-slate-500 to-slate-700' },
           ].map((a, i) => (
-            <motion.div
-              key={a.href}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.7 + i * 0.03 }}
-            >
-              <Link href={a.href}>
-                <div className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-white border-2 border-slate-200 hover:border-blue-400 hover:shadow-lg hover:-translate-y-1 transition-all text-center">
-                  <div
-                    className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${a.couleur} flex items-center justify-center text-white text-2xl shadow-md`}
-                  >
-                    {a.emoji}
-                  </div>
-                  <span className="font-bold text-slate-700 text-xs">
-                    {a.label}
-                  </span>
+            <Link key={a.href} href={a.href}>
+              <div className="flex flex-col items-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-white border border-slate-200 active:scale-95 transition-transform text-center">
+                <div
+                  className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br ${a.couleur} flex items-center justify-center text-white text-lg sm:text-xl`}
+                >
+                  {a.emoji}
                 </div>
-              </Link>
-            </motion.div>
+                <span className="font-bold text-slate-700 text-[10px] sm:text-xs">
+                  {a.label}
+                </span>
+              </div>
+            </Link>
           ))}
         </div>
       </motion.div>
 
-      {/* ============================================================ */}
-      {/* INFO SATISFACTION GARANTIE */}
-      {/* ============================================================ */}
-
+      {/* SATISFACTION */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.75 }}
-        className="bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 rounded-3xl p-6 shadow-2xl text-white relative overflow-hidden"
+        className="bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl text-white"
       >
-        <motion.div
-          className="absolute top-[-60px] right-[-60px] w-64 h-64 bg-white/10 rounded-full blur-3xl"
-          animate={{ x: [0, 30, 0], y: [0, -30, 0] }}
-          transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
-        />
-        <div className="relative z-10 flex items-start gap-4 flex-wrap">
-          <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-3xl border border-white/30 flex-shrink-0">
+        <div className="flex items-start gap-3 sm:gap-4 flex-wrap">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-white/20 flex items-center justify-center text-2xl sm:text-3xl flex-shrink-0">
             🛡️
           </div>
           <div className="flex-1 min-w-[200px]">
-            <h3 className="text-lg font-black mb-2">
+            <h3 className="text-base sm:text-lg font-bold mb-2">
               Satisfaction garantie
             </h3>
-            <p className="text-sm text-blue-100 mb-4 leading-relaxed">
+            <p className="text-xs sm:text-sm text-blue-100 mb-4 leading-relaxed">
               Si le prof ne vous plaît pas, nous le remplaçons gratuitement.
-              Consultez notre charte qualité complète pour connaître tous vos droits.
+              Consultez notre charte qualité.
             </p>
             <div className="flex flex-wrap gap-2">
               <Link
                 href="/espace-parent/charte-qualite"
-                className="bg-white text-blue-700 px-5 py-2.5 rounded-xl font-bold text-sm shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
+                className="bg-white text-blue-700 px-4 py-2 rounded-xl font-bold text-xs sm:text-sm active:scale-95 transition-transform"
               >
-                📜 Voir la charte
+                📜 Charte
               </Link>
               <Link
                 href="/espace-parent/regles"
-                className="bg-white/20 backdrop-blur-sm text-white px-5 py-2.5 rounded-xl font-bold text-sm border border-white/30 hover:bg-white/30 transition-all flex items-center gap-2"
+                className="bg-white/20 text-white px-4 py-2 rounded-xl font-bold text-xs sm:text-sm border border-white/30 active:scale-95 transition-transform"
               >
-                📖 Voir les règles
+                📖 Règles
               </Link>
             </div>
           </div>
         </div>
       </motion.div>
 
-      {/* ============================================================ */}
-      {/* SUPPORT WHATSAPP */}
-      {/* ============================================================ */}
-
+      {/* SUPPORT */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.8 }}
-        className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-3xl p-6 shadow-2xl text-white relative overflow-hidden"
+        className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl text-white"
       >
-        <motion.div
-          className="absolute top-[-50px] right-[-50px] w-64 h-64 bg-white/10 rounded-full blur-3xl"
-          animate={{ x: [0, 30, 0], y: [0, -30, 0] }}
-          transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
-        />
-        <div className="relative z-10 flex items-start gap-4 flex-wrap">
-          <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-3xl border border-white/30 flex-shrink-0">
+        <div className="flex items-start gap-3 sm:gap-4 flex-wrap">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-white/20 flex items-center justify-center text-2xl sm:text-3xl flex-shrink-0">
             💬
           </div>
           <div className="flex-1 min-w-[200px]">
-            <h3 className="text-lg font-black mb-1">
+            <h3 className="text-base sm:text-lg font-bold mb-1">
               Besoin d'aide ?
             </h3>
-            <p className="text-xs text-emerald-100 mb-3">
-              Notre équipe est disponible 7j/7 de 8h à 21h pour vous accompagner.
+            <p className="text-[11px] sm:text-xs text-emerald-100 mb-3">
+              Disponible 7j/7 de 8h à 21h.
             </p>
             <a
               href="https://wa.me/25377741482"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-white text-green-700 px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-green-50 transition-colors shadow-lg"
+              className="inline-flex items-center gap-2 bg-white text-green-700 px-4 py-2 rounded-xl font-bold text-xs sm:text-sm active:scale-95 transition-transform"
             >
               💬 Contacter le support
             </a>

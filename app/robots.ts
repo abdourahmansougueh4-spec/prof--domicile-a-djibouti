@@ -12,7 +12,7 @@ export default function robots(): MetadataRoute.Robots {
           '/espace-parent/',
           '/espace-professeur/',
           '/api/',
-          '/abdrhmn-zou_2022-2032/',
+          '/zx-4f8b2e-9d3a-ctrl/',
         ],
       },
     ],

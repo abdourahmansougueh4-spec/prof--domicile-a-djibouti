@@ -148,7 +148,7 @@ export default function AdminActivite() {
           user_id: d.parent_id,
           user_nom: parent.data?.nom_complet || 'Parent',
           user_role: 'parent',
-          lien: '/abdrhmn-zou_2022-2032/demandes',
+          lien: '/zx-4f8b2e-9d3a-ctrl/demandes',
           created_at: d.created_at,
         })
       }
@@ -169,7 +169,7 @@ export default function AdminActivite() {
           user_id: p.parent_id,
           user_nom: '',
           user_role: 'parent',
-          lien: '/abdrhmn-zou_2022-2032/paiements-parents',
+          lien: '/zx-4f8b2e-9d3a-ctrl/paiements-parents',
           created_at: p.created_at,
         })
       }
@@ -190,7 +190,7 @@ export default function AdminActivite() {
           user_id: a.parent_id,
           user_nom: '',
           user_role: 'parent',
-          lien: '/abdrhmn-zou_2022-2032/avis',
+          lien: '/zx-4f8b2e-9d3a-ctrl/avis',
           created_at: a.created_at,
         })
       }
@@ -211,7 +211,7 @@ export default function AdminActivite() {
           user_id: s.signale_par,
           user_nom: '',
           user_role: 'parent',
-          lien: '/abdrhmn-zou_2022-2032/signalements',
+          lien: '/zx-4f8b2e-9d3a-ctrl/signalements',
           created_at: s.created_at,
         })
       }

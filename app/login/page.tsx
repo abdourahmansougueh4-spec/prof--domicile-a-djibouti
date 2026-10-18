@@ -3,11 +3,12 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
 
   const [email, setEmail] = useState('')
@@ -15,6 +16,9 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [erreur, setErreur] = useState('')
   const [voirMotDePasse, setVoirMotDePasse] = useState(false)
+
+  // Récupérer l'URL de redirection (ex: /professeurs/123)
+  const redirectUrl = searchParams.get('redirect') || ''
 
   const valider = () => {
     if (!email || !motDePasse) {
@@ -37,20 +41,16 @@ export default function LoginPage() {
     setErreur('')
 
     try {
-      // 1. Connexion à Supabase Auth
-      const { data: authData, error: authError } =
-        await supabase.auth.signInWithPassword({
-          email: email.trim().toLowerCase(),
-          password: motDePasse,
-        })
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password: motDePasse,
+      })
 
       if (authError) {
         if (authError.message.includes('Invalid login credentials')) {
           setErreur('Email ou mot de passe incorrect.')
         } else if (authError.message.includes('Email not confirmed')) {
-          setErreur(
-            "Votre email n'a pas été confirmé. Contactez-nous sur WhatsApp."
-          )
+          setErreur("Votre email n'a pas été confirmé. Contactez-nous sur WhatsApp.")
         } else {
           setErreur(`Erreur : ${authError.message}`)
         }
@@ -64,7 +64,6 @@ export default function LoginPage() {
         return
       }
 
-      // 2. Récupérer le rôle de l'utilisateur
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('role, nom_complet')
@@ -77,17 +76,21 @@ export default function LoginPage() {
         return
       }
 
-      // 3. Rediriger selon le rôle
       const role = profileData.role
 
-      if (role === 'parent') {
-        router.push('/espace-parent')
-      } else if (role === 'professeur') {
-        router.push('/espace-professeur')
-      } else if (role === 'admin') {
-        router.push('/abdrhmn-zou_2022-2032')
+      // 🌟 LA LOGIQUE DE REDIRECTION INTELLIGENTE 🌟
+      if (redirectUrl) {
+        router.push(redirectUrl)
       } else {
-        router.push('/')
+        if (role === 'parent') {
+          router.push('/espace-parent')
+        } else if (role === 'professeur') {
+          router.push('/espace-professeur')
+        } else if (role === 'admin') {
+          router.push('/zx-4f8b2e-9d3a-ctrl')
+        } else {
+          router.push('/')
+        }
       }
     } catch (err) {
       console.error('Erreur:', err)
@@ -110,84 +113,60 @@ export default function LoginPage() {
         animate={{ x: [0, -50, 0], y: [0, -30, 0] }}
         transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
       />
-      <motion.div
-        className="absolute top-1/2 left-1/2 w-[400px] h-[400px] bg-indigo-300/20 rounded-full blur-3xl"
-        animate={{ scale: [1, 1.2, 1] }}
-        transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
-      />
 
-      {/* Lien retour */}
       <Link
         href="/"
-        className="absolute top-6 left-6 z-20 flex items-center gap-2 text-slate-600 hover:text-blue-700 transition-colors text-sm font-medium"
+        className="absolute top-6 left-6 z-20 flex items-center gap-2 text-slate-600 hover:text-blue-700 transition-colors text-sm font-bold"
       >
         ← Retour à l'accueil
       </Link>
 
-      {/* Lien aide WhatsApp */}
       <a
         href="https://wa.me/25377741482"
         target="_blank"
         rel="noopener noreferrer"
-        className="absolute top-6 right-6 z-20 text-sm font-medium text-slate-600 hover:text-emerald-600 transition-colors"
+        className="absolute top-6 right-6 z-20 text-sm font-bold text-slate-600 hover:text-emerald-600 transition-colors"
       >
         💬 Aide
       </a>
 
-      {/* Carte principale */}
       <motion.div
         initial={{ opacity: 0, y: 30, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.6, ease: 'easeOut' }}
         className="relative z-10 w-full max-w-md"
       >
-        {/* Logo */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="text-center mb-8"
-        >
+        <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-4">
             <span className="text-3xl font-black bg-gradient-to-r from-blue-700 to-emerald-600 bg-clip-text text-transparent">
-              Prof À Domicile
+              Djib Superprof
             </span>
             <span className="text-2xl">🇩🇯</span>
           </Link>
-          <h1 className="text-3xl font-black text-slate-900 mb-2">
-            Bon retour !
-          </h1>
-          <p className="text-slate-600">
+          <h1 className="text-3xl font-black text-slate-900 mb-2">Bon retour !</h1>
+          <p className="text-slate-600 font-medium">
             Connectez-vous à votre espace personnel
           </p>
-        </motion.div>
+        </div>
 
-        {/* Carte glassmorphism */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="bg-white/80 backdrop-blur-xl rounded-3xl border border-white/80 shadow-2xl shadow-blue-900/10 p-8 md:p-10"
-        >
-          {/* Erreur */}
+        <div className="bg-white/90 backdrop-blur-xl rounded-[2rem] border border-white shadow-2xl shadow-blue-900/10 p-8 md:p-10">
           <AnimatePresence>
             {erreur && (
               <motion.div
                 initial={{ opacity: 0, y: -10, height: 0 }}
                 animate={{ opacity: 1, y: 0, height: 'auto' }}
                 exit={{ opacity: 0, y: -10, height: 0 }}
-                className="mb-6 bg-red-50 border border-red-200 rounded-2xl p-4 flex items-start gap-3"
+                className="mb-6 bg-red-50 border-2 border-red-200 rounded-2xl p-4 flex items-start gap-3"
               >
                 <span className="text-xl">⚠️</span>
-                <p className="text-red-700 text-sm font-medium">{erreur}</p>
+                <p className="text-red-700 text-sm font-bold">{erreur}</p>
               </motion.div>
             )}
           </AnimatePresence>
 
           <form onSubmit={seConnecter} className="space-y-5">
-            {/* Email */}
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">
+              <label className="block text-sm font-black text-slate-700 mb-2 uppercase tracking-wide">
                 Email
               </label>
               <div className="relative">
@@ -200,22 +179,21 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="exemple@email.com"
                   autoComplete="email"
-                  className="w-full pl-12 pr-4 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none font-medium text-slate-800 transition-all placeholder:text-slate-400"
+                  className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold text-slate-800 transition-all placeholder:text-slate-400"
                 />
               </div>
             </div>
 
-            {/* Mot de passe */}
             <div>
               <div className="flex justify-between items-center mb-2">
-                <label className="text-sm font-bold text-slate-700">
+                <label className="text-sm font-black text-slate-700 uppercase tracking-wide">
                   Mot de passe
                 </label>
                 <Link
                   href="/mot-de-passe-oublie"
-                  className="text-xs font-medium text-blue-700 hover:text-blue-800 hover:underline"
+                  className="text-xs font-bold text-blue-700 hover:underline"
                 >
-                  Mot de passe oublié ?
+                  Oublié ?
                 </Link>
               </div>
               <div className="relative">
@@ -228,35 +206,30 @@ export default function LoginPage() {
                   onChange={(e) => setMotDePasse(e.target.value)}
                   placeholder="••••••••"
                   autoComplete="current-password"
-                  className="w-full pl-12 pr-12 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none font-medium text-slate-800 transition-all placeholder:text-slate-400"
+                  className="w-full pl-12 pr-12 py-3.5 bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-bold text-slate-800 transition-all placeholder:text-slate-400"
                 />
                 <button
                   type="button"
                   onClick={() => setVoirMotDePasse(!voirMotDePasse)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
                 >
                   {voirMotDePasse ? '🙈' : '👁️'}
                 </button>
               </div>
             </div>
 
-            {/* Bouton connexion */}
             <motion.button
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
               type="submit"
               disabled={loading}
-              whileHover={{ scale: loading ? 1 : 1.01 }}
-              whileTap={{ scale: loading ? 1 : 0.99 }}
-              className="w-full py-4 rounded-2xl font-bold text-white bg-gradient-to-r from-blue-700 to-indigo-600 shadow-lg shadow-blue-600/30 hover:shadow-xl hover:shadow-blue-600/40 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full py-4 rounded-xl font-black text-white bg-gradient-to-r from-blue-700 to-indigo-600 shadow-xl shadow-blue-600/30 hover:shadow-2xl transition-all disabled:opacity-60 flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>
                   <motion.div
                     animate={{ rotate: 360 }}
-                    transition={{
-                      duration: 1,
-                      repeat: Infinity,
-                      ease: 'linear',
-                    }}
+                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                     className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
                   />
                   Connexion...
@@ -267,35 +240,28 @@ export default function LoginPage() {
             </motion.button>
           </form>
 
-          {/* Séparateur */}
-          <div className="relative my-6">
+          <div className="relative my-8">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-200"></div>
+              <div className="w-full border-t-2 border-slate-100"></div>
             </div>
             <div className="relative flex justify-center text-xs">
-              <span className="bg-white/80 px-3 text-slate-500 font-medium">
+              <span className="bg-white px-4 text-slate-400 font-black uppercase tracking-widest">
                 OU
               </span>
             </div>
           </div>
 
-          {/* Lien inscription */}
+          {/* Lien Inscription avec conservation du redirect */}
           <Link
-            href="/inscription"
-            className="block w-full py-4 rounded-2xl font-bold text-center text-blue-700 bg-blue-50 border-2 border-blue-200 hover:bg-blue-100 hover:border-blue-300 transition-all"
+            href={`/inscription${redirectUrl ? `?redirect=${encodeURIComponent(redirectUrl)}` : ''}`}
+            className="block w-full py-4 rounded-xl font-black text-center text-blue-700 bg-blue-50 border-2 border-blue-100 hover:bg-blue-100 transition-all"
           >
             ✨ Créer un compte
           </Link>
-        </motion.div>
+        </div>
 
-        {/* Footer */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.5 }}
-          className="mt-8 text-center space-y-3"
-        >
-          <div className="flex items-center justify-center gap-4 text-xs text-slate-500">
+        <div className="mt-8 text-center space-y-3">
+          <div className="flex items-center justify-center gap-4 text-xs text-slate-500 font-bold">
             <div className="flex items-center gap-1">
               <span>🔒</span>
               <span>Connexion sécurisée</span>
@@ -309,11 +275,11 @@ export default function LoginPage() {
             href="https://wa.me/25377741482"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm text-slate-500 hover:text-emerald-600 transition-colors inline-flex items-center gap-2"
+            className="text-sm text-slate-500 hover:text-emerald-600 transition-colors inline-flex items-center gap-2 font-bold"
           >
             💬 Besoin d'aide ? Contactez-nous sur WhatsApp
           </a>
-        </motion.div>
+        </div>
       </motion.div>
     </div>
   )

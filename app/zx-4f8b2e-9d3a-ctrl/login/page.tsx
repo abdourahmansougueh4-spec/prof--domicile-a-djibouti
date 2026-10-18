@@ -109,7 +109,7 @@ export default function AdminLogin() {
       })
 
       console.log('✅ Connexion réussie, redirection...')
-      router.push('/abdrhmn-zou_2022-2032')
+      router.push('/zx-4f8b2e-9d3a-ctrl')
     } catch (err: any) {
       console.error('❌ Erreur globale:', err)
       setErreur(`Erreur : ${err.message || 'inconnue'}`)

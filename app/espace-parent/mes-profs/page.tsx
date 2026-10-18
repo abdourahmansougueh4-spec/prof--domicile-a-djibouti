@@ -31,8 +31,10 @@ type ProfActif = {
     appreciation: string | null
     points_forts: string | null
     points_ameliorer: string | null
+    enfant_id: string | null
+    enfant_prenom: string | null
   } | null
-  historique_notes: { mois: string; note: number }[]
+  historique_notes: { mois: string; note: number; enfant_prenom: string | null }[]
   deja_noté_par_parent: boolean
 }
 
@@ -60,7 +62,7 @@ const LABELS_MATIERES: { [k: string]: string } = {
 }
 
 // ============================================================
-// HELPER : Mois en cours
+// HELPERS
 // ============================================================
 
 const getMoisActuel = (): string => {
@@ -69,60 +71,26 @@ const getMoisActuel = (): string => {
   return `${mois.charAt(0).toUpperCase() + mois.slice(1)} ${d.getFullYear()}`
 }
 
-// ============================================================
-// HELPER : Fidélité prof
-// ============================================================
-
-const getFidelite = (mois: number): {
-  emoji: string
-  label: string
-  couleur: string
-} => {
+const getFidelite = (mois: number) => {
   if (mois >= 12) return { emoji: '👑', label: 'Légende', couleur: 'from-amber-500 to-orange-600' }
   if (mois >= 6) return { emoji: '💎', label: 'Fidèle', couleur: 'from-emerald-500 to-teal-600' }
   if (mois >= 3) return { emoji: '⭐', label: 'Régulier', couleur: 'from-blue-500 to-indigo-600' }
   return { emoji: '🌱', label: 'Nouveau', couleur: 'from-purple-500 to-pink-600' }
 }
 
-// ============================================================
-// HELPER : Couleur note
-// ============================================================
-
-const getCouleurNote = (note: number | null): {
-  couleur: string
-  bg: string
-  label: string
-  emoji: string
-} => {
-  if (note === null || note === 0) {
-    return {
-      couleur: 'text-slate-400',
-      bg: 'bg-slate-100',
-      label: 'Non évalué',
-      emoji: '⏳',
-    }
-  }
-  if (note >= 16) {
+const getCouleurNote = (note: number | null) => {
+  if (note === null || note === 0)
+    return { couleur: 'text-slate-400', bg: 'bg-slate-100', label: 'Non évalué', emoji: '⏳' }
+  if (note >= 16)
     return { couleur: 'text-emerald-600', bg: 'bg-emerald-50', label: 'Excellent', emoji: '🌟' }
-  }
-  if (note >= 12) {
+  if (note >= 12)
     return { couleur: 'text-blue-600', bg: 'bg-blue-50', label: 'Bien', emoji: '✅' }
-  }
-  if (note >= 10) {
+  if (note >= 10)
     return { couleur: 'text-amber-600', bg: 'bg-amber-50', label: 'Moyen', emoji: '📊' }
-  }
   return { couleur: 'text-red-600', bg: 'bg-red-50', label: 'À améliorer', emoji: '⚠️' }
 }
 
-// ============================================================
-// HELPER : Coach IA
-// ============================================================
-
-const genererConseils = (profs: ProfActif[]): {
-  emoji: string
-  texte: string
-  priorite: 'haute' | 'moyenne' | 'basse'
-}[] => {
+const genererConseils = (profs: ProfActif[]) => {
   const conseils: { emoji: string; texte: string; priorite: 'haute' | 'moyenne' | 'basse' }[] = []
 
   if (profs.length === 0) {
@@ -140,7 +108,7 @@ const genererConseils = (profs: ProfActif[]): {
   if (sansSuivi.length > 0) {
     conseils.push({
       emoji: '📊',
-      texte: `${sansSuivi.length} prof${sansSuivi.length > 1 ? 's' : ''} n'ont pas encore publié le suivi de ${moisActuel}. Contactez-les.`,
+      texte: `${sansSuivi.length} prof${sansSuivi.length > 1 ? 's' : ''} n'ont pas encore publié le suivi de ${moisActuel}.`,
       priorite: 'haute',
     })
   }
@@ -149,7 +117,7 @@ const genererConseils = (profs: ProfActif[]): {
   if (aNoter.length > 0) {
     conseils.push({
       emoji: '⭐',
-      texte: `Vous pouvez laisser un avis sur ${aNoter.length} prof${aNoter.length > 1 ? 's' : ''}. Cela les aide beaucoup !`,
+      texte: `Vous pouvez laisser un avis sur ${aNoter.length} prof${aNoter.length > 1 ? 's' : ''}.`,
       priorite: 'moyenne',
     })
   }
@@ -158,16 +126,7 @@ const genererConseils = (profs: ProfActif[]): {
   if (fideles.length > 0) {
     conseils.push({
       emoji: '💎',
-      texte: `${fideles.length} prof${fideles.length > 1 ? 's' : ''} vous accompagne${fideles.length > 1 ? 'nt' : ''} depuis plus de 6 mois. Excellent travail !`,
-      priorite: 'basse',
-    })
-  }
-
-  const avecNote = profs.filter((p) => p.suivi_actuel?.note && p.suivi_actuel.note >= 16)
-  if (avecNote.length > 0) {
-    conseils.push({
-      emoji: '🎉',
-      texte: `${avecNote.length} prof${avecNote.length > 1 ? 's' : ''} excellent${avecNote.length > 1 ? 's' : ''} ce mois-ci. Continuez la collaboration !`,
+      texte: `${fideles.length} prof${fideles.length > 1 ? 's' : ''} depuis plus de 6 mois. Excellent !`,
       priorite: 'basse',
     })
   }
@@ -175,15 +134,17 @@ const genererConseils = (profs: ProfActif[]): {
   if (conseils.length === 0) {
     conseils.push({
       emoji: '✨',
-      texte: 'Tout va bien avec vos profs ! Continuez comme ça.',
+      texte: 'Tout va bien avec vos profs !',
       priorite: 'basse',
     })
   }
 
-  return conseils.sort((a, b) => {
-    const ordre = { haute: 0, moyenne: 1, basse: 2 }
-    return ordre[a.priorite] - ordre[b.priorite]
-  }).slice(0, 4)
+  return conseils
+    .sort((a, b) => {
+      const ordre = { haute: 0, moyenne: 1, basse: 2 }
+      return ordre[a.priorite] - ordre[b.priorite]
+    })
+    .slice(0, 4)
 }
 
 // ============================================================
@@ -193,7 +154,6 @@ const genererConseils = (profs: ProfActif[]): {
 export default function MesProfs() {
   const supabase = createClient()
 
-  // ---- ÉTATS ----
   const [profs, setProfs] = useState<ProfActif[]>([])
   const [loading, setLoading] = useState(true)
   const [erreur, setErreur] = useState('')
@@ -201,6 +161,7 @@ export default function MesProfs() {
   const [tri, setTri] = useState<Tri>('recent')
   const [recherche, setRecherche] = useState('')
   const [historiqueModal, setHistoriqueModal] = useState<ProfActif | null>(null)
+  const [suiviDetail, setSuiviDetail] = useState<ProfActif | null>(null)
 
   const moisActuel = getMoisActuel()
 
@@ -213,14 +174,15 @@ export default function MesProfs() {
     setErreur('')
 
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
       if (!user) {
         setErreur('Session expirée')
         setLoading(false)
         return
       }
 
-      // 1. Charger les demandes acceptées
       const { data: demandes, error: demandesErr } = await supabase
         .from('demandes')
         .select('*')
@@ -233,7 +195,6 @@ export default function MesProfs() {
       const profsComplets: ProfActif[] = []
 
       for (const d of demandes || []) {
-        // 2. Infos prof
         const [profRes, profInfoRes] = await Promise.all([
           supabase
             .from('profiles')
@@ -247,24 +208,23 @@ export default function MesProfs() {
             .single(),
         ])
 
-        // 3. Suivi du mois actuel
+        // ✅ Suivi du mois avec enfant_prenom + points forts/à améliorer
         const { data: suiviActuel } = await supabase
           .from('suivi_mensuel')
-          .select('id, mois, note, appreciation, points_forts, points_ameliorer')
+          .select('id, mois, note, appreciation, points_forts, points_ameliorer, enfant_id, enfant_prenom')
           .eq('demande_id', d.id)
           .eq('mois', moisActuel)
           .maybeSingle()
 
-        // 4. Historique des notes
+        // Historique complet
         const { data: historique } = await supabase
           .from('suivi_mensuel')
-          .select('mois, note')
+          .select('mois, note, enfant_prenom')
           .eq('demande_id', d.id)
           .not('note', 'is', null)
           .order('created_at', { ascending: false })
           .limit(6)
 
-        // 5. Vérifier si parent a déjà noté ce prof
         const { data: avisExistant } = await supabase
           .from('avis')
           .select('id')
@@ -272,7 +232,6 @@ export default function MesProfs() {
           .eq('professeur_id', d.professeur_id)
           .maybeSingle()
 
-        // 6. Calculer les mois
         const dateDebut = new Date(d.created_at)
         const maintenant = new Date()
         const moisEcoules =
@@ -298,6 +257,7 @@ export default function MesProfs() {
           historique_notes: (historique || []).map((h) => ({
             mois: h.mois,
             note: Number(h.note),
+            enfant_prenom: h.enfant_prenom || null,
           })),
           deja_noté_par_parent: !!avisExistant,
         })
@@ -317,17 +277,15 @@ export default function MesProfs() {
   }, [charger])
 
   // ============================================================
-  // FILTRES + TRI
+  // FILTRES
   // ============================================================
 
   const profsFiltres = useMemo(() => {
     let resultat = profs.filter((p) => {
-      // Filtre
       if (filtre === 'recents' && p.mois_avec_client >= 3) return false
       if (filtre === 'long_terme' && p.mois_avec_client < 6) return false
       if (filtre === 'top_notes' && p.note_moyenne < 4.5) return false
 
-      // Recherche
       if (recherche.trim()) {
         const r = recherche.toLowerCase().trim()
         return (
@@ -339,7 +297,6 @@ export default function MesProfs() {
       return true
     })
 
-    // Tri
     if (tri === 'recent')
       resultat.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     if (tri === 'ancien')
@@ -368,14 +325,15 @@ export default function MesProfs() {
     return { total, moyenneNotes, moisCumules, suiviAJour }
   }, [profs, moisActuel])
 
-  const compte = useMemo(() => {
-    return {
+  const compte = useMemo(
+    () => ({
       tous: profs.length,
       recents: profs.filter((p) => p.mois_avec_client < 3).length,
       long_terme: profs.filter((p) => p.mois_avec_client >= 6).length,
       top_notes: profs.filter((p) => p.note_moyenne >= 4.5).length,
-    }
-  }, [profs])
+    }),
+    [profs]
+  )
 
   const conseils = useMemo(() => genererConseils(profs), [profs])
 
@@ -389,16 +347,12 @@ export default function MesProfs() {
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-          className="w-12 h-12 border-4 border-blue-700 border-t-transparent rounded-full"
+          className="w-12 h-12 border-3 border-slate-900 border-t-transparent rounded-full"
         />
-        <p className="text-slate-500 text-sm">Chargement de vos profs...</p>
+        <p className="text-slate-500 text-sm">Chargement...</p>
       </div>
     )
   }
-
-  // ============================================================
-  // RENDU — ERREUR
-  // ============================================================
 
   if (erreur) {
     return (
@@ -406,16 +360,16 @@ export default function MesProfs() {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-red-50 border-2 border-red-200 rounded-3xl p-8 max-w-md text-center"
+          className="bg-rose-50 border border-rose-200 rounded-2xl p-6 sm:p-8 max-w-md text-center"
         >
-          <div className="text-6xl mb-4">⚠️</div>
-          <h2 className="text-xl font-black text-slate-900 mb-2">Erreur</h2>
-          <p className="text-red-700 text-sm mb-6">{erreur}</p>
+          <div className="text-5xl mb-4">⚠️</div>
+          <h2 className="text-lg sm:text-xl font-black text-slate-900 mb-2">Erreur</h2>
+          <p className="text-rose-700 text-sm mb-6">{erreur}</p>
           <button
             onClick={charger}
-            className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl font-bold text-sm shadow-lg"
+            className="px-5 py-3 bg-slate-900 text-white rounded-xl font-bold text-sm"
           >
-            🔄 Réessayer
+            Réessayer
           </button>
         </motion.div>
       </div>
@@ -427,582 +381,412 @@ export default function MesProfs() {
   // ============================================================
 
   return (
-    <div className="space-y-6 pb-10">
+    <div className="space-y-4 sm:space-y-6 pb-10">
       <Link
         href="/espace-parent"
-        className="text-sm text-slate-500 hover:text-blue-600 inline-flex items-center gap-1"
+        className="text-sm text-slate-400 hover:text-slate-700 inline-flex items-center gap-1.5 transition-colors"
       >
-        ← Retour au tableau de bord
+        ← Retour
       </Link>
 
-      {/* ============================================================ */}
-      {/* HEADER HERO */}
-      {/* ============================================================ */}
-
+      {/* HERO */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-br from-emerald-600 via-teal-600 to-blue-700 rounded-3xl p-6 md:p-8 shadow-2xl text-white relative overflow-hidden"
+        className="bg-gradient-to-br from-emerald-600 via-teal-600 to-blue-700 rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-xl text-white relative overflow-hidden"
       >
-        <motion.div
-          className="absolute top-[-50px] right-[-50px] w-64 h-64 bg-white/10 rounded-full blur-3xl"
-          animate={{ x: [0, 30, 0], y: [0, -30, 0] }}
-          transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
-        />
-        <motion.div
-          className="absolute bottom-[-60px] left-[-60px] w-56 h-56 bg-white/10 rounded-full blur-3xl"
-          animate={{ x: [0, -20, 0], y: [0, 20, 0] }}
-          transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
-        />
-
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-3 flex-wrap">
-            <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-3xl border-2 border-white/30 flex-shrink-0">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-2xl sm:text-3xl border-2 border-white/30 flex-shrink-0">
               👨‍🏫
             </div>
             <div>
-              <div className="text-xs font-bold uppercase tracking-wider opacity-90">
+              <div className="text-[10px] font-bold uppercase tracking-wider opacity-90">
                 Mon équipe éducative
               </div>
-              <h1 className="text-3xl md:text-4xl font-black">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-black">
                 Mes professeurs
               </h1>
             </div>
           </div>
-          <p className="text-emerald-100 text-sm mb-5">
-            {stats.total} prof{stats.total > 1 ? 's' : ''} actif{stats.total > 1 ? 's' : ''} qui accompagne{stats.total > 1 ? 'nt' : ''} vos enfants
+          <p className="text-emerald-100 text-xs sm:text-sm mb-4 sm:mb-5">
+            {stats.total} prof{stats.total > 1 ? 's' : ''} actif{stats.total > 1 ? 's' : ''} · Suivi à jour : {stats.suiviAJour}/{stats.total}
           </p>
 
-          {/* 4 KPI dans le header */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/20">
-              <div className="text-[10px] font-black uppercase opacity-90">
-                👥 Total profs
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
+            {[
+              { label: 'Total profs', val: stats.total, emoji: '👥' },
+              { label: 'Note moy.', val: stats.moyenneNotes > 0 ? stats.moyenneNotes.toFixed(1) : '—', emoji: '⭐' },
+              { label: 'Mois cumulés', val: stats.moisCumules, emoji: '📅' },
+              { label: 'Suivi à jour', val: `${stats.suiviAJour}/${stats.total}`, emoji: '✅' },
+            ].map((k) => (
+              <div
+                key={k.label}
+                className="bg-white/15 backdrop-blur-sm rounded-xl p-2.5 sm:p-3 border border-white/20"
+              >
+                <div className="text-[9px] sm:text-[10px] font-bold uppercase opacity-90 mb-1">
+                  {k.emoji} {k.label}
+                </div>
+                <div className="text-lg sm:text-2xl font-black">{k.val}</div>
               </div>
-              <div className="text-2xl font-black">{stats.total}</div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/20">
-              <div className="text-[10px] font-black uppercase opacity-90">
-                ⭐ Note moy.
-              </div>
-              <div className="text-2xl font-black">
-                {stats.moyenneNotes > 0 ? stats.moyenneNotes.toFixed(1) : '—'}
-              </div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/20">
-              <div className="text-[10px] font-black uppercase opacity-90">
-                📅 Mois cumulés
-              </div>
-              <div className="text-2xl font-black">{stats.moisCumules}</div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/20">
-              <div className="text-[10px] font-black uppercase opacity-90">
-                ✅ Suivi à jour
-              </div>
-              <div className="text-2xl font-black">
-                {stats.suiviAJour}/{stats.total}
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </motion.div>
 
-      {/* ============================================================ */}
-      {/* MESSAGE ALERTE SUIVI */}
-      {/* ============================================================ */}
-
+      {/* Alerte suivi */}
       {stats.total > 0 && stats.suiviAJour < stats.total && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-amber-50 border-l-4 border-amber-500 rounded-2xl p-4 flex items-start gap-3"
+          className="bg-amber-50 border-l-4 border-amber-500 rounded-2xl p-3 sm:p-4 flex items-start gap-3"
         >
-          <span className="text-2xl flex-shrink-0">⏳</span>
+          <span className="text-xl sm:text-2xl flex-shrink-0">⏳</span>
           <div className="flex-1">
-            <p className="text-sm font-bold text-amber-900 mb-1">
+            <p className="text-xs sm:text-sm font-bold text-amber-900 mb-0.5">
               {stats.total - stats.suiviAJour} suivi{stats.total - stats.suiviAJour > 1 ? 's' : ''} en attente pour {moisActuel}
             </p>
-            <p className="text-xs text-amber-800">
-              Vos profs n'ont pas encore publié le suivi de ce mois. Ils le feront bientôt.
+            <p className="text-[11px] sm:text-xs text-amber-800">
+              Vos profs n'ont pas encore publié le suivi de ce mois.
             </p>
           </div>
         </motion.div>
       )}
 
-      {/* ============================================================ */}
-      {/* EMPTY STATE */}
-      {/* ============================================================ */}
-
+      {/* Empty state */}
       {stats.total === 0 ? (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="bg-white/80 backdrop-blur-xl rounded-3xl p-12 border border-white/80 shadow-xl text-center"
+          className="bg-white rounded-2xl sm:rounded-3xl p-8 sm:p-12 border border-slate-200 text-center"
         >
-          <div className="text-6xl mb-4">👨‍🏫</div>
-          <h2 className="text-2xl font-black text-slate-900 mb-3">
+          <div className="text-5xl sm:text-6xl mb-4">👨‍🏫</div>
+          <h2 className="text-lg sm:text-2xl font-black text-slate-900 mb-2">
             Aucun prof actif
           </h2>
-          <p className="text-slate-600 text-sm mb-6 max-w-md mx-auto">
-            Vous n'avez pas encore de professeur accepté. Envoyez votre première demande pour commencer.
+          <p className="text-slate-600 text-xs sm:text-sm mb-6 max-w-md mx-auto">
+            Vous n'avez pas encore de professeur accepté. Envoyez votre première demande.
           </p>
-          <div className="flex flex-wrap gap-2 justify-center">
-            <Link
-              href="/espace-parent/recherche"
-              className="px-6 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-blue-700 to-indigo-600 shadow-lg hover:shadow-xl transition-all inline-flex items-center gap-2"
-            >
-              🔍 Trouver un prof
-            </Link>
-            <a
-              href="https://wa.me/25377741482"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-6 py-3 rounded-xl font-bold text-white bg-green-500 hover:bg-green-600 transition-colors inline-flex items-center gap-2"
-            >
-              💬 Demander conseil
-            </a>
-          </div>
+          <Link
+            href="/espace-parent/recherche"
+            className="inline-flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-white bg-slate-900 hover:bg-slate-800 transition-colors text-sm"
+          >
+            🔍 Trouver un prof
+          </Link>
         </motion.div>
       ) : (
         <>
-          {/* ============================================================ */}
-          {/* FILTRES */}
-          {/* ============================================================ */}
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-            className="flex flex-wrap gap-2"
-          >
+          {/* Filtres */}
+          <div className="flex flex-wrap gap-1.5 sm:gap-2 overflow-x-auto pb-1">
             {(
               [
-                { val: 'tous', label: '👥 Tous', count: compte.tous },
-                { val: 'recents', label: '🌱 Récents (-3 mois)', count: compte.recents },
-                { val: 'long_terme', label: '💎 Long terme (6+)', count: compte.long_terme },
-                { val: 'top_notes', label: '⭐ Top notes (4.5+)', count: compte.top_notes },
-              ] as { val: Filtre; label: string; count: number }[]
+                { val: 'tous', label: '👥 Tous', count: compte.tous, color: 'from-slate-700 to-slate-900' },
+                { val: 'recents', label: '🌱 Récents', count: compte.recents, color: 'from-emerald-500 to-teal-600' },
+                { val: 'long_terme', label: '💎 6+ mois', count: compte.long_terme, color: 'from-blue-500 to-indigo-600' },
+                { val: 'top_notes', label: '⭐ Top', count: compte.top_notes, color: 'from-amber-500 to-orange-600' },
+              ] as any[]
             ).map((f) => (
               <button
                 key={f.val}
                 onClick={() => setFiltre(f.val)}
-                className={`px-4 py-2.5 rounded-xl font-bold text-sm transition-all ${
+                className={`px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap ${
                   filtre === f.val
-                    ? 'bg-gradient-to-r from-emerald-600 to-blue-700 text-white shadow-lg'
-                    : 'bg-white/80 text-slate-700 hover:bg-white border border-slate-200'
+                    ? `bg-gradient-to-r ${f.color} text-white shadow-md`
+                    : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
                 }`}
               >
                 {f.label} ({f.count})
               </button>
             ))}
-          </motion.div>
+          </div>
 
-          {/* ============================================================ */}
-          {/* RECHERCHE + TRI */}
-          {/* ============================================================ */}
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="flex flex-wrap gap-3"
-          >
-            <div className="relative flex-1 min-w-[250px]">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+          {/* Recherche */}
+          <div className="flex flex-wrap gap-2 sm:gap-3">
+            <div className="relative flex-1 min-w-[180px]">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">
                 🔍
               </span>
               <input
                 type="text"
                 value={recherche}
                 onChange={(e) => setRecherche(e.target.value)}
-                placeholder="Rechercher par nom, matière ou quartier..."
-                className="w-full pl-12 pr-4 py-3 bg-white/80 border-2 border-slate-200 rounded-2xl text-slate-900 placeholder:text-slate-400 outline-none focus:border-emerald-500 focus:bg-white font-medium transition-all"
+                placeholder="Rechercher..."
+                className="w-full pl-9 sm:pl-11 pr-3 py-2.5 sm:py-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-400 outline-none font-medium transition-colors"
               />
-              {recherche && (
-                <button
-                  onClick={() => setRecherche('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-slate-200 hover:bg-slate-300 flex items-center justify-center text-slate-700 text-xs"
-                >
-                  ✕
-                </button>
-              )}
             </div>
-
             <select
               value={tri}
               onChange={(e) => setTri(e.target.value as Tri)}
-              className="px-4 py-3 bg-white/80 border-2 border-slate-200 rounded-2xl text-slate-900 text-sm font-bold outline-none focus:border-emerald-500 cursor-pointer"
+              className="px-3 sm:px-4 py-2.5 sm:py-3 bg-white border border-slate-200 rounded-xl text-slate-900 text-xs sm:text-sm font-semibold focus:border-slate-400 outline-none cursor-pointer"
             >
-              <option value="recent">📅 Plus récent</option>
-              <option value="ancien">📅 Plus ancien</option>
+              <option value="recent">📅 Récent</option>
+              <option value="ancien">📅 Ancien</option>
               <option value="note_haute">⭐ Meilleure note</option>
-              <option value="mois_eleve">⏰ Plus de mois</option>
-              <option value="matiere">📚 Par matière</option>
+              <option value="mois_eleve">⏰ Plus mois</option>
+              <option value="matiere">📚 Matière</option>
             </select>
-          </motion.div>
+          </div>
 
-          {/* Compteur résultats */}
-          {(recherche || filtre !== 'tous') && (
-            <div className="text-sm text-slate-500">
-              <span className="font-bold text-slate-900">{profsFiltres.length}</span>{' '}
-              résultat{profsFiltres.length > 1 ? 's' : ''}
-            </div>
-          )}
-
-          {/* ============================================================ */}
-          {/* COACH IA */}
-          {/* ============================================================ */}
-
+          {/* Coach IA */}
           {conseils.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.25 }}
-              className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-3xl p-6 border-2 border-purple-200 shadow-xl"
-            >
+            <div className="bg-purple-50 rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-purple-200">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center text-white text-2xl shadow-lg">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-purple-500 flex items-center justify-center text-white text-xl sm:text-2xl">
                   🤖
                 </div>
                 <div>
-                  <h3 className="font-black text-slate-900 text-lg">Coach IA</h3>
-                  <p className="text-xs text-slate-500">
-                    Conseils personnalisés
-                  </p>
+                  <h3 className="font-bold text-slate-900 text-sm sm:text-base">Coach IA</h3>
+                  <p className="text-[11px] text-slate-500">Conseils</p>
                 </div>
               </div>
-
-              <div className="grid md:grid-cols-2 gap-3">
+              <div className="grid md:grid-cols-2 gap-2 sm:gap-3">
                 {conseils.map((c, i) => (
-                  <motion.div
+                  <div
                     key={i}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3 + i * 0.05 }}
-                    className={`rounded-xl p-3 border-2 flex items-start gap-3 ${
+                    className={`rounded-xl p-3 border flex items-start gap-2 ${
                       c.priorite === 'haute'
-                        ? 'bg-red-50 border-red-200'
+                        ? 'bg-rose-50 border-rose-200'
                         : c.priorite === 'moyenne'
                         ? 'bg-amber-50 border-amber-200'
                         : 'bg-white border-purple-100'
                     }`}
                   >
-                    <span className="text-xl flex-shrink-0">{c.emoji}</span>
-                    <p className="text-sm text-slate-800 font-medium flex-1">
+                    <span className="text-lg sm:text-xl flex-shrink-0">{c.emoji}</span>
+                    <p className="text-[12px] sm:text-sm text-slate-800 font-medium flex-1">
                       {c.texte}
                     </p>
-                  </motion.div>
+                  </div>
                 ))}
               </div>
-            </motion.div>
+            </div>
           )}
+
+          {/* Liste des profs */}
+          <div className="space-y-3 sm:space-y-4">
+            {profsFiltres.map((p, i) => {
+              const fidelite = getFidelite(p.mois_avec_client)
+              const infoNote = getCouleurNote(p.suivi_actuel?.note || null)
+              const suiviAJour = p.suivi_actuel && p.suivi_actuel.mois === moisActuel
+
+              return (
+                <motion.div
+                  key={p.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: Math.min(i * 0.05, 0.4) }}
+                  className={`bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 border transition-all ${
+                    suiviAJour ? 'border-slate-200' : 'border-amber-200'
+                  }`}
+                >
+                  {/* Header prof */}
+                  <div className="flex items-start gap-3 sm:gap-4 flex-wrap mb-4">
+                    <div className="relative flex-shrink-0">
+                      {p.photo_url ? (
+                        <img
+                          src={p.photo_url}
+                          alt={p.nom_complet}
+                          className="w-14 h-14 sm:w-20 sm:h-20 rounded-2xl object-cover"
+                        />
+                      ) : (
+                        <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white text-2xl sm:text-3xl">
+                          👨‍🏫
+                        </div>
+                      )}
+                      <div
+                        className={`absolute -bottom-1 -right-1 w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br ${fidelite.couleur} flex items-center justify-center text-white text-[10px] sm:text-sm border-2 border-white`}
+                      >
+                        {fidelite.emoji}
+                      </div>
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <h3 className="font-bold text-slate-900 text-base sm:text-lg">
+                          {p.nom_complet}
+                        </h3>
+                        <span
+                          className={`text-[9px] bg-gradient-to-r ${fidelite.couleur} text-white px-2 py-0.5 rounded-full font-bold`}
+                        >
+                          {fidelite.emoji} {fidelite.label.toUpperCase()}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+                        {p.etoiles > 0 && (
+                          <span className="flex items-center gap-1">
+                            <span className="text-amber-400">{'⭐'.repeat(p.etoiles)}</span>
+                            {p.note_moyenne > 0 && (
+                              <span className="font-bold text-slate-900">{p.note_moyenne.toFixed(1)}</span>
+                            )}
+                          </span>
+                        )}
+                        {p.quartier && (
+                          <span className="flex items-center gap-1">
+                            <span>📍</span>
+                            <span>{p.quartier}</span>
+                          </span>
+                        )}
+                        <span className="flex items-center gap-1">
+                          <span>📅</span>
+                          <span>{p.mois_avec_client} mois</span>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ✅ SUIVI DU MOIS AVEC ENFANT */}
+                  <div className={`rounded-2xl p-3 sm:p-4 border ${
+                    suiviAJour
+                      ? 'bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200'
+                      : 'bg-amber-50 border-amber-200'
+                  }`}>
+                    <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs font-bold text-slate-700 uppercase">
+                          📊 Suivi de {moisActuel}
+                        </span>
+                        {suiviAJour && p.suivi_actuel?.enfant_prenom && (
+                          <span className="text-[10px] bg-purple-500 text-white px-2 py-0.5 rounded-full font-bold">
+                            👶 {p.suivi_actuel.enfant_prenom}
+                          </span>
+                        )}
+                      </div>
+                      {suiviAJour ? (
+                        <span className="text-[10px] bg-emerald-500 text-white px-2 py-0.5 rounded-full font-bold">
+                          ✓ PUBLIÉ
+                        </span>
+                      ) : (
+                        <span className="text-[10px] bg-amber-500 text-white px-2 py-0.5 rounded-full font-bold">
+                          ⏳ EN ATTENTE
+                        </span>
+                      )}
+                    </div>
+
+                    {suiviAJour && p.suivi_actuel ? (
+                      <div className="space-y-3">
+                        {/* Note + Statut */}
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className={`${infoNote.bg} rounded-xl px-3 py-2 border border-slate-200`}>
+                            <div className="text-[9px] text-slate-500 font-bold uppercase">Note</div>
+                            <div className={`text-xl sm:text-2xl font-black ${infoNote.couleur}`}>
+                              {p.suivi_actuel.note || '—'}/20
+                            </div>
+                          </div>
+                          <div className={`${infoNote.bg} rounded-xl px-3 py-2 border border-slate-200`}>
+                            <div className="text-[9px] text-slate-500 font-bold uppercase">Niveau</div>
+                            <div className={`text-sm font-bold ${infoNote.couleur}`}>
+                              {infoNote.emoji} {infoNote.label}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Appréciation */}
+                        {p.suivi_actuel.appreciation && (
+                          <div className="bg-white rounded-xl p-3 border border-slate-200">
+                            <div className="text-[10px] text-slate-500 font-bold uppercase mb-1">
+                              💬 Appréciation du prof
+                            </div>
+                            <p className="text-xs text-slate-700 italic leading-relaxed">
+                              « {p.suivi_actuel.appreciation} »
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Points forts / À améliorer */}
+                        {(p.suivi_actuel.points_forts || p.suivi_actuel.points_ameliorer) && (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {p.suivi_actuel.points_forts && (
+                              <div className="bg-emerald-50 rounded-xl p-3 border border-emerald-200">
+                                <div className="text-[10px] text-emerald-700 font-bold uppercase mb-1">
+                                  ✅ Points forts
+                                </div>
+                                <p className="text-xs text-slate-700 leading-relaxed">
+                                  {p.suivi_actuel.points_forts}
+                                </p>
+                              </div>
+                            )}
+                            {p.suivi_actuel.points_ameliorer && (
+                              <div className="bg-amber-50 rounded-xl p-3 border border-amber-200">
+                                <div className="text-[10px] text-amber-700 font-bold uppercase mb-1">
+                                  ⚠️ À améliorer
+                                </div>
+                                <p className="text-xs text-slate-700 leading-relaxed">
+                                  {p.suivi_actuel.points_ameliorer}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-slate-600 italic">
+                        Le prof n'a pas encore publié le suivi de ce mois.
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-3">
+                    <a
+                      href={`https://wa.me/25377741482?text=${encodeURIComponent(`Bonjour, je suis le parent de ${p.nom_complet}, pouvez-vous me donner des nouvelles ?`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-2.5 bg-green-500 text-white rounded-xl font-bold text-xs text-center hover:bg-green-600 transition-colors"
+                    >
+                      💬 WhatsApp
+                    </a>
+                    <Link
+                      href={`/espace-parent/profils/${p.professeur_id}`}
+                      className="px-3 py-2.5 bg-slate-100 text-slate-700 rounded-xl font-bold text-xs text-center hover:bg-slate-200 transition-colors"
+                    >
+                      👁️ Profil
+                    </Link>
+                    {p.historique_notes.length > 1 && (
+                      <button
+                        onClick={() => setHistoriqueModal(p)}
+                        className="px-3 py-2.5 bg-purple-100 text-purple-700 rounded-xl font-bold text-xs hover:bg-purple-200 transition-colors"
+                      >
+                        📊 Historique
+                      </button>
+                    )}
+                    <Link
+                      href="/espace-parent/avis"
+                      className={`px-3 py-2.5 rounded-xl font-bold text-xs text-center transition-colors ${
+                        p.deja_noté_par_parent
+                          ? 'bg-slate-100 text-slate-600'
+                          : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                      }`}
+                    >
+                      {p.deja_noté_par_parent ? '✓ Avis' : '⭐ Noter'}
+                    </Link>
+                  </div>
+                </motion.div>
+              )
+            })}
+          </div>
         </>
       )}
 
-      {/* ============================================================ */}
-      {/* LISTE DES PROFS */}
-      {/* ============================================================ */}
-
-      {stats.total > 0 && profsFiltres.length === 0 && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="bg-white/80 backdrop-blur-xl rounded-3xl p-12 border border-white/80 shadow-xl text-center"
-        >
-          <div className="text-6xl mb-4">🔍</div>
-          <h3 className="font-black text-slate-900 text-xl mb-2">
-            Aucun résultat
-          </h3>
-          <p className="text-slate-600 text-sm mb-4">
-            Aucun prof ne correspond à vos critères.
-          </p>
-          <button
-            onClick={() => {
-              setRecherche('')
-              setFiltre('tous')
-            }}
-            className="px-5 py-2.5 bg-blue-50 text-blue-700 rounded-xl font-bold text-sm border border-blue-200 hover:bg-blue-100 transition-colors"
-          >
-            ✕ Réinitialiser les filtres
-          </button>
-        </motion.div>
-      )}
-
-      {profsFiltres.length > 0 && (
-        <div className="space-y-4">
-          {profsFiltres.map((p, i) => {
-            const fidelite = getFidelite(p.mois_avec_client)
-            const infoNote = getCouleurNote(p.suivi_actuel?.note || null)
-            const suiviAJour = p.suivi_actuel && p.suivi_actuel.mois === moisActuel
-
-            return (
-              <motion.div
-                key={p.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: Math.min(i * 0.05, 0.4) }}
-                whileHover={{ y: -3 }}
-                className={`bg-white/90 backdrop-blur-xl rounded-3xl p-6 border-2 transition-all ${
-                  suiviAJour
-                    ? 'border-slate-200 hover:border-emerald-400'
-                    : 'border-amber-200 hover:border-amber-400'
-                }`}
-              >
-                {/* Header prof */}
-                <div className="flex items-start gap-4 flex-wrap mb-4">
-                  <div className="relative flex-shrink-0">
-                    {p.photo_url ? (
-                      <img
-                        src={p.photo_url}
-                        alt={p.nom_complet}
-                        className="w-16 h-16 md:w-20 md:h-20 rounded-2xl object-cover shadow-lg"
-                      />
-                    ) : (
-                      <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white text-3xl shadow-lg">
-                        👨‍🏫
-                      </div>
-                    )}
-                    <div
-                      className={`absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-gradient-to-br ${fidelite.couleur} flex items-center justify-center text-white text-sm border-2 border-white shadow-lg`}
-                      title={fidelite.label}
-                    >
-                      {fidelite.emoji}
-                    </div>
-                  </div>
-
-                  <div className="flex-1 min-w-[200px]">
-                    <div className="flex items-center gap-2 flex-wrap mb-2">
-                      <h3 className="font-black text-slate-900 text-lg">
-                        {p.nom_complet}
-                      </h3>
-                      <span
-                        className={`text-[10px] bg-gradient-to-r ${fidelite.couleur} text-white px-2 py-0.5 rounded-full font-black`}
-                      >
-                        {fidelite.emoji} {fidelite.label.toUpperCase()}
-                      </span>
-                      {p.pionnier_illustre && (
-                        <span className="text-[10px] bg-gradient-to-r from-red-500 to-pink-600 text-white px-2 py-0.5 rounded-full font-black">
-                          👑 ILLUSTRE
-                        </span>
-                      )}
-                      {p.badge_admin === 'super_pro' && !p.pionnier_illustre && (
-                        <span className="text-[10px] bg-gradient-to-r from-amber-500 to-orange-600 text-white px-2 py-0.5 rounded-full font-black">
-                          👑 SUPER-PRO
-                        </span>
-                      )}
-                      {p.badge_admin === 'recommande' && !p.pionnier_illustre && (
-                        <span className="text-[10px] bg-gradient-to-r from-blue-500 to-blue-600 text-white px-2 py-0.5 rounded-full font-black">
-                          🏅 RECOMMANDÉ
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600 mb-2">
-                      {p.etoiles > 0 && (
-                        <span className="flex items-center gap-1">
-                          <span className="text-amber-400">{'⭐'.repeat(p.etoiles)}</span>
-                          {p.note_moyenne > 0 && (
-                            <span className="font-black text-slate-900">
-                              {p.note_moyenne.toFixed(1)}
-                            </span>
-                          )}
-                        </span>
-                      )}
-                      {p.quartier && (
-                        <>
-                          <span>•</span>
-                          <span>📍 {p.quartier}</span>
-                        </>
-                      )}
-                      <span>•</span>
-                      <span>📅 {p.mois_avec_client} mois ensemble</span>
-                    </div>
-
-                    {p.matiere && (
-                      <div className="flex flex-wrap gap-1.5 mb-2">
-                        {p.matiere.split(', ').slice(0, 4).map((m) => (
-                          <span
-                            key={m}
-                            className="text-[10px] bg-blue-50 text-blue-700 px-2 py-1 rounded-full font-bold border border-blue-200"
-                          >
-                            📚 {LABELS_MATIERES[m.trim()] || m.trim()}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    <div className="text-[10px] text-slate-500">
-                      ✓ Depuis {new Date(p.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Suivi du mois */}
-                <div className={`rounded-2xl p-4 border-2 mb-4 ${suiviAJour ? 'bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200' : 'bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200'}`}>
-                  <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-                    <div className="text-xs font-black text-slate-700 uppercase">
-                      📊 Suivi de {moisActuel}
-                    </div>
-                    {suiviAJour ? (
-                      <span className="text-[10px] bg-emerald-500 text-white px-2 py-0.5 rounded-full font-black">
-                        ✓ PUBLIÉ
-                      </span>
-                    ) : (
-                      <span className="text-[10px] bg-amber-500 text-white px-2 py-0.5 rounded-full font-black animate-pulse">
-                        ⏳ EN ATTENTE
-                      </span>
-                    )}
-                  </div>
-
-                  {suiviAJour && p.suivi_actuel ? (
-                    <>
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className={`${infoNote.bg} rounded-xl px-4 py-2 border border-slate-200`}>
-                          <div className="text-[9px] text-slate-500 font-black uppercase">
-                            Note du mois
-                          </div>
-                          <div className={`text-2xl font-black ${infoNote.couleur}`}>
-                            {p.suivi_actuel.note || '—'}/20
-                          </div>
-                        </div>
-                        <div className={`${infoNote.bg} rounded-xl px-4 py-2 border border-slate-200 flex-1`}>
-                          <div className="text-[9px] text-slate-500 font-black uppercase">
-                            Appréciation
-                          </div>
-                          <div className={`text-sm font-bold ${infoNote.couleur}`}>
-                            {infoNote.emoji} {infoNote.label}
-                          </div>
-                        </div>
-                      </div>
-
-                      {p.suivi_actuel.appreciation && (
-                        <div className="bg-white rounded-xl p-3 border border-slate-200">
-                          <div className="text-[10px] text-slate-500 font-black mb-1 uppercase">
-                            💬 Commentaire du prof
-                          </div>
-                          <p className="text-xs text-slate-700 italic leading-relaxed">
-                            « {p.suivi_actuel.appreciation} »
-                          </p>
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <p className="text-xs text-slate-600 italic">
-                      Le prof n'a pas encore publié le suivi de ce mois. Contactez-le pour avoir des nouvelles.
-                    </p>
-                  )}
-                </div>
-
-                {/* Actions */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                  <a
-                    href={`https://wa.me/25377741482?text=${encodeURIComponent(`Bonjour, je suis le parent de ${p.nom_complet}, pouvez-vous me donner des nouvelles sur la progression de mon enfant ?`)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-bold text-xs shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-1"
-                  >
-                    💬 WhatsApp
-                  </a>
-                  <Link
-                    href={`/espace-parent/profils/${p.professeur_id}`}
-                    className="px-4 py-2.5 bg-blue-50 text-blue-700 rounded-xl font-bold text-xs border border-blue-200 hover:bg-blue-100 transition-colors flex items-center justify-center gap-1"
-                  >
-                    👁️ Voir profil
-                  </Link>
-                  {p.historique_notes.length > 0 && (
-                    <button
-                      onClick={() => setHistoriqueModal(p)}
-                      className="px-4 py-2.5 bg-purple-50 text-purple-700 rounded-xl font-bold text-xs border border-purple-200 hover:bg-purple-100 transition-colors flex items-center justify-center gap-1"
-                    >
-                      📊 Historique
-                    </button>
-                  )}
-                  <Link
-                    href="/espace-parent/avis"
-                    className={`px-4 py-2.5 rounded-xl font-bold text-xs border transition-colors flex items-center justify-center gap-1 ${
-                      p.deja_noté_par_parent
-                        ? 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-                        : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
-                    }`}
-                  >
-                    {p.deja_noté_par_parent ? '✓ Avis envoyé' : '⭐ Laisser avis'}
-                  </Link>
-                </div>
-              </motion.div>
-            )
-          })}
-        </div>
-      )}
-
-      {/* ============================================================ */}
-      {/* CTA TROUVER PLUS DE PROFS */}
-      {/* ============================================================ */}
-
-      {stats.total > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="bg-gradient-to-br from-blue-700 via-indigo-700 to-purple-700 rounded-3xl p-6 md:p-8 shadow-2xl text-white text-center relative overflow-hidden"
-        >
-          <motion.div
-            className="absolute top-[-60px] right-[-60px] w-72 h-72 bg-white/10 rounded-full blur-3xl"
-            animate={{ x: [0, 30, 0], y: [0, -30, 0] }}
-            transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
-          />
-          <div className="relative z-10">
-            <div className="text-5xl mb-3">🔍</div>
-            <h2 className="text-xl md:text-2xl font-black mb-3">
-              Besoin d'un autre prof ?
-            </h2>
-            <p className="text-sm text-blue-100 mb-5 max-w-lg mx-auto">
-              Vous cherchez un prof pour une autre matière ou un autre niveau ?
-              Trouvez-le en quelques clics.
-            </p>
-            <Link
-              href="/espace-parent/recherche"
-              className="inline-flex items-center gap-2 bg-white text-blue-700 px-6 py-3 rounded-2xl font-bold shadow-xl hover:shadow-2xl hover:scale-105 transition-all"
-            >
-              🔍 Voir tous les profs
-            </Link>
-          </div>
-        </motion.div>
-      )}
-
-      {/* ============================================================ */}
-      {/* SUPPORT WHATSAPP */}
-      {/* ============================================================ */}
-
+      {/* Support */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.55 }}
-        className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-3xl p-6 shadow-2xl text-white relative overflow-hidden"
+        className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl text-white"
       >
-        <motion.div
-          className="absolute top-[-50px] right-[-50px] w-64 h-64 bg-white/10 rounded-full blur-3xl"
-          animate={{ x: [0, 30, 0], y: [0, -30, 0] }}
-          transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
-        />
-        <div className="relative z-10 flex items-start gap-4 flex-wrap">
-          <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-3xl border border-white/30 flex-shrink-0">
+        <div className="flex items-start gap-3 sm:gap-4 flex-wrap">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-white/20 flex items-center justify-center text-2xl sm:text-3xl flex-shrink-0">
             💬
           </div>
           <div className="flex-1 min-w-[200px]">
-            <h3 className="text-lg font-black mb-1">
-              Une question sur vos profs ?
-            </h3>
-            <p className="text-xs text-emerald-100 mb-3">
-              Notre équipe est disponible 7j/7 pour vous accompagner et gérer
-              toute situation.
+            <h3 className="text-base sm:text-lg font-bold mb-1">Besoin d'aide ?</h3>
+            <p className="text-[11px] sm:text-xs text-emerald-100 mb-3">
+              Disponible 7j/7 pour vous accompagner.
             </p>
             <a
               href="https://wa.me/25377741482"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-white text-green-700 px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-green-50 transition-colors shadow-lg"
+              className="inline-flex items-center gap-2 bg-white text-green-700 px-4 py-2 rounded-xl font-bold text-xs sm:text-sm"
             >
               💬 Contacter le support
             </a>
@@ -1010,161 +794,63 @@ export default function MesProfs() {
         </div>
       </motion.div>
 
-      {/* ============================================================ */}
-      {/* MODAL HISTORIQUE DES NOTES */}
-      {/* ============================================================ */}
-
+      {/* Modal historique */}
       <AnimatePresence>
         {historiqueModal && (
           <div
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto"
+            className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto"
             onClick={() => setHistoriqueModal(null)}
           >
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-3xl max-w-lg w-full shadow-2xl my-8 overflow-hidden"
+              className="bg-white rounded-2xl max-w-lg w-full shadow-2xl my-8 overflow-hidden"
             >
-              {/* Header */}
-              <div className="bg-gradient-to-r from-purple-600 to-pink-700 p-6">
+              <div className="bg-gradient-to-r from-purple-600 to-pink-700 p-5">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    {historiqueModal.photo_url ? (
-                      <img
-                        src={historiqueModal.photo_url}
-                        alt={historiqueModal.nom_complet}
-                        className="w-14 h-14 rounded-2xl object-cover border-2 border-white/30"
-                      />
-                    ) : (
-                      <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center text-2xl">
-                        👨‍🏫
-                      </div>
-                    )}
-                    <div>
-                      <h2 className="text-lg font-black text-white">
-                        📊 Historique des notes
-                      </h2>
-                      <p className="text-xs text-purple-100 mt-1">
-                        {historiqueModal.nom_complet}
-                      </p>
-                    </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-white">📊 Historique</h2>
+                    <p className="text-xs text-purple-100 mt-0.5">{historiqueModal.nom_complet}</p>
                   </div>
                   <button
                     onClick={() => setHistoriqueModal(null)}
-                    className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white text-xl"
+                    className="w-9 h-9 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white"
                   >
                     ✕
                   </button>
                 </div>
               </div>
-
-              {/* Contenu */}
-              <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
-                {/* Graphique en barres */}
-                {historiqueModal.historique_notes.length > 0 && (
-                  <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-4 border border-blue-200">
-                    <div className="text-xs font-black text-slate-600 uppercase mb-4">
-                      📈 Évolution sur les derniers mois
-                    </div>
-                    <div className="flex items-end justify-between gap-2 h-32">
-                      {[...historiqueModal.historique_notes].reverse().map((h, i) => {
-                        const info = getCouleurNote(h.note)
-                        return (
-                          <div
-                            key={i}
-                            className="flex-1 flex flex-col items-center group"
-                          >
-                            <div className="text-[10px] font-black text-slate-600 mb-1 opacity-70">
-                              {h.note}
-                            </div>
-                            <motion.div
-                              initial={{ height: 0 }}
-                              animate={{
-                                height: `${Math.max((h.note / 20) * 100, 4)}%`,
-                              }}
-                              transition={{ delay: 0.1 + i * 0.05, duration: 0.5 }}
-                              className={`w-full bg-gradient-to-t ${
-                                h.note >= 16
-                                  ? 'from-emerald-600 to-emerald-400'
-                                  : h.note >= 12
-                                  ? 'from-blue-600 to-blue-400'
-                                  : h.note >= 10
-                                  ? 'from-amber-600 to-amber-400'
-                                  : 'from-red-600 to-red-400'
-                              } rounded-t-md`}
-                            />
-                            <div className="text-[9px] text-slate-500 font-bold mt-1 text-center truncate w-full">
-                              {h.mois.split(' ')[0].slice(0, 3)}
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* Liste détaillée */}
-                <div>
-                  <div className="text-xs font-black text-slate-600 uppercase mb-3">
-                    📅 Détail mois par mois
-                  </div>
-                  <div className="space-y-2">
-                    {historiqueModal.historique_notes.map((h, i) => {
-                      const info = getCouleurNote(h.note)
-                      return (
-                        <div
-                          key={i}
-                          className={`${info.bg} rounded-xl p-3 border border-slate-200 flex items-center gap-3`}
-                        >
-                          <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-xl shadow-sm flex-shrink-0">
-                            {info.emoji}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="font-black text-slate-900 text-sm">
-                              {h.mois}
-                            </div>
-                            <div className={`text-[10px] font-bold ${info.couleur}`}>
-                              {info.label}
-                            </div>
-                          </div>
-                          <div className={`text-2xl font-black ${info.couleur}`}>
-                            {h.note}/20
-                          </div>
+              <div className="p-5 space-y-2.5 max-h-[70vh] overflow-y-auto">
+                {historiqueModal.historique_notes.map((h, i) => {
+                  const info = getCouleurNote(h.note)
+                  return (
+                    <div
+                      key={i}
+                      className={`rounded-xl p-3.5 border ${info.bg} border-slate-200 flex items-center gap-3`}
+                    >
+                      <div className="w-11 h-11 rounded-xl bg-white flex items-center justify-center text-2xl shadow-sm flex-shrink-0">
+                        {info.emoji}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-bold text-slate-900 text-sm truncate">
+                          {h.mois}
+                          {h.enfant_prenom && (
+                            <span className="text-slate-500 font-medium"> · {h.enfant_prenom}</span>
+                          )}
                         </div>
-                      )
-                    })}
-                  </div>
-                </div>
-
-                {/* Moyenne */}
-                {historiqueModal.historique_notes.length > 0 && (
-                  <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-4 text-white text-center">
-                    <div className="text-xs font-black uppercase opacity-90 mb-1">
-                      🎯 Moyenne globale
+                        <div className={`text-[10px] font-bold ${info.couleur}`}>{info.label}</div>
+                      </div>
+                      <div className={`text-2xl font-bold ${info.couleur}`}>{h.note}/20</div>
                     </div>
-                    <div className="text-3xl font-black">
-                      {(
-                        historiqueModal.historique_notes.reduce(
-                          (acc, h) => acc + h.note,
-                          0
-                        ) / historiqueModal.historique_notes.length
-                      ).toFixed(1)}
-                      /20
-                    </div>
-                    <div className="text-[10px] opacity-90 mt-1">
-                      Sur {historiqueModal.historique_notes.length} mois
-                    </div>
-                  </div>
-                )}
+                  )
+                })}
               </div>
-
-              {/* Footer */}
-              <div className="p-6 border-t border-slate-200 bg-slate-50">
+              <div className="p-4 border-t border-slate-200 bg-slate-50">
                 <button
                   onClick={() => setHistoriqueModal(null)}
-                  className="w-full py-3 rounded-xl font-bold text-slate-700 bg-white border-2 border-slate-200 hover:bg-slate-100 transition-colors"
+                  className="w-full py-3 rounded-xl font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-100 transition-colors text-sm"
                 >
                   Fermer
                 </button>

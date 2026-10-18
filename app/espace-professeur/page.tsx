@@ -115,10 +115,6 @@ const niveauxConfig = {
   },
 }
 
-// ============================================================
-// CONFIG BADGES
-// ============================================================
-
 const badgesConfig = {
   recommande: { label: 'Recommandé', emoji: '🏅', couleur: 'from-blue-500 to-blue-600' },
   super_pro: { label: 'Super-Pro', emoji: '👑', couleur: 'from-amber-500 to-orange-600' },
@@ -127,7 +123,7 @@ const badgesConfig = {
 }
 
 // ============================================================
-// HELPER : Salutation selon l'heure
+// HELPERS
 // ============================================================
 
 const getSalutation = (): { texte: string; emoji: string } => {
@@ -137,10 +133,6 @@ const getSalutation = (): { texte: string; emoji: string } => {
   return { texte: 'Bonsoir', emoji: '🌙' }
 }
 
-// ============================================================
-// HELPER : Conseils personnalisés (Coach IA)
-// ============================================================
-
 const genererConseils = (
   profil: ProfilComplet,
   prof: ProfInfo,
@@ -148,87 +140,35 @@ const genererConseils = (
 ): { emoji: string; texte: string; priorite: 'haute' | 'moyenne' | 'basse' }[] => {
   const conseils: { emoji: string; texte: string; priorite: 'haute' | 'moyenne' | 'basse' }[] = []
 
-  // Priorité haute
   if (!profil.approuve) {
-    conseils.push({
-      emoji: '⏳',
-      texte: 'Votre profil est en attente d\'approbation. Complétez vos documents.',
-      priorite: 'haute',
-    })
+    conseils.push({ emoji: '⏳', texte: 'Votre profil est en attente d\'approbation.', priorite: 'haute' })
   }
-
   if (stats.documents < stats.documents_total) {
-    conseils.push({
-      emoji: '📎',
-      texte: `Ajoutez vos documents manquants (${stats.documents}/${stats.documents_total})`,
-      priorite: 'haute',
-    })
+    conseils.push({ emoji: '📎', texte: `Ajoutez vos documents manquants (${stats.documents}/${stats.documents_total})`, priorite: 'haute' })
   }
-
   if (!profil.bio || profil.bio.length < 50) {
-    conseils.push({
-      emoji: '📝',
-      texte: 'Écrivez une bio de 50+ caractères pour attirer les parents',
-      priorite: 'haute',
-    })
+    conseils.push({ emoji: '📝', texte: 'Écrivez une bio de 50+ caractères pour attirer les parents', priorite: 'haute' })
   }
-
   if (!profil.photo_url) {
-    conseils.push({
-      emoji: '📸',
-      texte: 'Ajoutez une photo de profil professionnelle',
-      priorite: 'haute',
-    })
+    conseils.push({ emoji: '📸', texte: 'Ajoutez une photo de profil professionnelle', priorite: 'haute' })
   }
-
-  // Priorité moyenne
   if (stats.creneaux < 6) {
-    conseils.push({
-      emoji: '📅',
-      texte: `Ajoutez plus de créneaux (${stats.creneaux} actuellement, 6 recommandés)`,
-      priorite: 'moyenne',
-    })
+    conseils.push({ emoji: '📅', texte: `Ajoutez plus de créneaux (${stats.creneaux} actuellement, 6 recommandés)`, priorite: 'moyenne' })
   }
-
   if (stats.matieres < 2) {
-    conseils.push({
-      emoji: '📚',
-      texte: 'Ajoutez plus de matières pour toucher plus de parents',
-      priorite: 'moyenne',
-    })
+    conseils.push({ emoji: '📚', texte: 'Ajoutez plus de matières pour toucher plus de parents', priorite: 'moyenne' })
   }
-
   if (!prof.prix_min || !prof.prix_max) {
-    conseils.push({
-      emoji: '💰',
-      texte: 'Définissez vos tarifs (privés) pour valider votre dossier',
-      priorite: 'moyenne',
-    })
+    conseils.push({ emoji: '💰', texte: 'Définissez vos tarifs (privés) pour valider votre dossier', priorite: 'moyenne' })
   }
-
-  // Priorité basse
   if (prof.nombre_avis < 5 && stats.eleves_total > 0) {
-    conseils.push({
-      emoji: '⭐',
-      texte: 'Demandez à vos élèves satisfaits de laisser un avis',
-      priorite: 'basse',
-    })
+    conseils.push({ emoji: '⭐', texte: 'Demandez à vos élèves satisfaits de laisser un avis', priorite: 'basse' })
   }
-
   if (prof.etoiles < 3 && prof.mois_avec_client < 12) {
-    conseils.push({
-      emoji: '🎯',
-      texte: `Continuez avec vos élèves : ${12 - prof.mois_avec_client} mois restants pour Expert`,
-      priorite: 'basse',
-    })
+    conseils.push({ emoji: '🎯', texte: `Continuez avec vos élèves : ${12 - prof.mois_avec_client} mois pour Expert`, priorite: 'basse' })
   }
-
   if (conseils.length === 0) {
-    conseils.push({
-      emoji: '✨',
-      texte: 'Votre profil est complet et optimisé. Bravo !',
-      priorite: 'basse',
-    })
+    conseils.push({ emoji: '✨', texte: 'Votre profil est complet et optimisé. Bravo !', priorite: 'basse' })
   }
 
   return conseils.sort((a, b) => {
@@ -237,15 +177,7 @@ const genererConseils = (
   }).slice(0, 5)
 }
 
-// ============================================================
-// HELPER : Calcul complétion profil
-// ============================================================
-
-const calculerCompletion = (
-  profil: ProfilComplet,
-  prof: ProfInfo,
-  stats: Stats
-): number => {
+const calculerCompletion = (profil: ProfilComplet, prof: ProfInfo, stats: Stats): number => {
   const criteres = [
     profil.nom_complet.length >= 3,
     profil.telephone.length >= 12,
@@ -263,10 +195,6 @@ const calculerCompletion = (
   return Math.round((remplis / criteres.length) * 100)
 }
 
-// ============================================================
-// HELPER : Détecter le statut du compte
-// ============================================================
-
 const getStatutCompte = (profil: ProfilComplet): 'banni' | 'masque' | 'en_attente' | 'actif' => {
   if (profil.banni) return 'banni'
   if (profil.masque) return 'masque'
@@ -281,7 +209,6 @@ const getStatutCompte = (profil: ProfilComplet): 'banni' | 'masque' | 'en_attent
 export default function DashboardProfesseur() {
   const supabase = createClient()
 
-  // ---- ÉTATS ----
   const [profil, setProfil] = useState<ProfilComplet | null>(null)
   const [prof, setProf] = useState<ProfInfo | null>(null)
   const [stats, setStats] = useState<Stats>({
@@ -302,10 +229,6 @@ export default function DashboardProfesseur() {
   const [banniereMasque, setBanniereMasque] = useState(true)
   const [notifsOuvertes, setNotifsOuvertes] = useState(false)
 
-  // ============================================================
-  // CHARGEMENT
-  // ============================================================
-
   const charger = useCallback(async () => {
     setLoading(true)
     setErreur('')
@@ -313,17 +236,14 @@ export default function DashboardProfesseur() {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
-        setErreur('Session expirée. Reconnecte-toi.')
+        setErreur('Session expirée.')
         setLoading(false)
         return
       }
 
-      // Vérifier le rôle
       const { data: profileData } = await supabase
         .from('profiles')
-        .select(
-          'nom_complet, email, telephone, whatsapp, quartier, photo_url, bio, approuve, masque, banni, motif_masquage, motif_bannissement, date_masquage, role'
-        )
+        .select('nom_complet, email, telephone, whatsapp, quartier, photo_url, bio, approuve, masque, banni, motif_masquage, motif_bannissement, date_masquage, role')
         .eq('id', user.id)
         .single()
 
@@ -350,7 +270,6 @@ export default function DashboardProfesseur() {
         date_masquage: profileData.date_masquage || null,
       })
 
-      // Charger les infos prof + stats en parallèle
       const [
         profRes,
         demandesCount,
@@ -363,59 +282,16 @@ export default function DashboardProfesseur() {
         demandesRecentesRes,
         avisRes,
       ] = await Promise.all([
-        supabase
-          .from('professeurs')
-          .select(
-            'etoiles, note_moyenne, nombre_avis, nombre_demandes, experience_annees, mois_avec_client, badge_admin, pionnier, pionnier_illustre, a_bac_s, est_etudiant, prix_min, prix_max, zone_enseignement, bac_s_scan_url, carte_identite_url, carte_etudiante_url, photo_profil_url'
-          )
-          .eq('id', user.id)
-          .single(),
-        supabase
-          .from('demandes')
-          .select('*', { count: 'exact', head: true })
-          .eq('professeur_id', user.id),
-        supabase
-          .from('demandes')
-          .select('*', { count: 'exact', head: true })
-          .eq('professeur_id', user.id)
-          .eq('statut', 'en_attente'),
-        supabase
-          .from('demandes')
-          .select('*', { count: 'exact', head: true })
-          .eq('professeur_id', user.id)
-          .eq('statut', 'acceptee'),
-        supabase
-          .from('disponibilites')
-          .select('*', { count: 'exact', head: true })
-          .eq('professeur_id', user.id),
-        supabase
-          .from('matieres_par_prof')
-          .select('*', { count: 'exact', head: true })
-          .eq('professeur_id', user.id),
-        supabase
-          .from('professeurs')
-          .select('bac_s_scan_url, carte_identite_url, carte_etudiante_url, photo_profil_url, a_bac_s, est_etudiant')
-          .eq('id', user.id)
-          .single(),
-        supabase
-          .from('notifications')
-          .select('id, titre, contenu, lien, lu, created_at')
-          .eq('destinataire_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(10),
-        supabase
-          .from('demandes')
-          .select('id, parent_id, matiere, statut, prix_souhaite, created_at')
-          .eq('professeur_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(3),
-        supabase
-          .from('avis')
-          .select('id, note, commentaire, created_at')
-          .eq('professeur_id', user.id)
-          .eq('publie', true)
-          .order('created_at', { ascending: false })
-          .limit(3),
+        supabase.from('professeurs').select('etoiles, note_moyenne, nombre_avis, nombre_demandes, experience_annees, mois_avec_client, badge_admin, pionnier, pionnier_illustre, a_bac_s, est_etudiant, prix_min, prix_max, zone_enseignement, bac_s_scan_url, carte_identite_url, carte_etudiante_url, photo_profil_url').eq('id', user.id).single(),
+        supabase.from('demandes').select('*', { count: 'exact', head: true }).eq('professeur_id', user.id),
+        supabase.from('demandes').select('*', { count: 'exact', head: true }).eq('professeur_id', user.id).eq('statut', 'en_attente'),
+        supabase.from('demandes').select('*', { count: 'exact', head: true }).eq('professeur_id', user.id).eq('statut', 'acceptee'),
+        supabase.from('disponibilites').select('*', { count: 'exact', head: true }).eq('professeur_id', user.id),
+        supabase.from('matieres_par_prof').select('*', { count: 'exact', head: true }).eq('professeur_id', user.id),
+        supabase.from('professeurs').select('bac_s_scan_url, carte_identite_url, carte_etudiante_url, photo_profil_url, a_bac_s, est_etudiant').eq('id', user.id).single(),
+        supabase.from('notifications').select('id, titre, contenu, lien, lu, created_at').eq('destinataire_id', user.id).order('created_at', { ascending: false }).limit(10),
+        supabase.from('demandes').select('id, parent_id, matiere, statut, prix_souhaite, created_at').eq('professeur_id', user.id).order('created_at', { ascending: false }).limit(3),
+        supabase.from('avis').select('id, note, commentaire, created_at').eq('professeur_id', user.id).eq('publie', true).order('created_at', { ascending: false }).limit(3),
       ])
 
       if (profRes.data) {
@@ -437,15 +313,14 @@ export default function DashboardProfesseur() {
         })
       }
 
-      // Calcul documents
       let docsFournis = 0
-      let docsTotal = 2 // Bac S + Carte identité de base
+      let docsTotal = 2
       if (docsRes.data) {
         if (docsRes.data.bac_s_scan_url) docsFournis++
         if (docsRes.data.carte_identite_url) docsFournis++
         if (docsRes.data.photo_profil_url) docsFournis++
         if (docsRes.data.est_etudiant) {
-          docsTotal++ // carte étudiante
+          docsTotal++
           if (docsRes.data.carte_etudiante_url) docsFournis++
         }
       }
@@ -463,15 +338,9 @@ export default function DashboardProfesseur() {
       setNotifications(notifsRes.data || [])
       setAvisRecents(avisRes.data || [])
 
-      // Formater les demandes récentes avec nom du parent
       const demandesFormatees: DemandeRecente[] = []
       for (const d of demandesRecentesRes.data || []) {
-        const { data: parent } = await supabase
-          .from('profiles')
-          .select('nom_complet')
-          .eq('id', d.parent_id)
-          .single()
-
+        const { data: parent } = await supabase.from('profiles').select('nom_complet').eq('id', d.parent_id).single()
         demandesFormatees.push({
           id: d.id,
           parent_nom: parent?.nom_complet || 'Parent',
@@ -483,7 +352,6 @@ export default function DashboardProfesseur() {
       }
       setDemandesRecentes(demandesFormatees)
 
-      // Activité 7 derniers jours
       const maintenant = new Date()
       const activite: ActiviteJour[] = []
       for (let i = 6; i >= 0; i--) {
@@ -493,12 +361,7 @@ export default function DashboardProfesseur() {
         const nextDay = new Date(date)
         nextDay.setDate(nextDay.getDate() + 1)
 
-        const { count } = await supabase
-          .from('demandes')
-          .select('*', { count: 'exact', head: true })
-          .eq('professeur_id', user.id)
-          .gte('created_at', date.toISOString())
-          .lt('created_at', nextDay.toISOString())
+        const { count } = await supabase.from('demandes').select('*', { count: 'exact', head: true }).eq('professeur_id', user.id).gte('created_at', date.toISOString()).lt('created_at', nextDay.toISOString())
 
         activite.push({
           date: date.toISOString(),
@@ -508,7 +371,7 @@ export default function DashboardProfesseur() {
       }
       setActivite7j(activite)
     } catch (err: any) {
-      console.error('Erreur chargement dashboard:', err)
+      console.error('Erreur:', err)
       setErreur(err.message || 'Erreur inconnue')
     } finally {
       setLoading(false)
@@ -519,57 +382,19 @@ export default function DashboardProfesseur() {
     charger()
   }, [charger])
 
-  // ============================================================
-  // CALCULS DÉRIVÉS
-  // ============================================================
-
-  const statutCompte = useMemo(() => {
-    if (!profil) return 'actif' as const
-    return getStatutCompte(profil)
-  }, [profil])
-
-  const completion = useMemo(() => {
-    if (!profil || !prof) return 0
-    return calculerCompletion(profil, prof, stats)
-  }, [profil, prof, stats])
-
-  const conseils = useMemo(() => {
-    if (!profil || !prof) return []
-    return genererConseils(profil, prof, stats)
-  }, [profil, prof, stats])
-
-  const notifsNonLues = useMemo(
-    () => notifications.filter((n) => !n.lu).length,
-    [notifications]
-  )
-
-  const niveauActuel = useMemo(() => {
-    if (!prof) return niveauxConfig[0]
-    return niveauxConfig[prof.etoiles as keyof typeof niveauxConfig] || niveauxConfig[0]
-  }, [prof])
-
-  const maxActivite = useMemo(
-    () => Math.max(...activite7j.map((a) => a.count), 1),
-    [activite7j]
-  )
-
+  const statutCompte = useMemo(() => profil ? getStatutCompte(profil) : ('actif' as const), [profil])
+  const completion = useMemo(() => (profil && prof) ? calculerCompletion(profil, prof, stats) : 0, [profil, prof, stats])
+  const conseils = useMemo(() => (profil && prof) ? genererConseils(profil, prof, stats) : [], [profil, prof, stats])
+  const notifsNonLues = useMemo(() => notifications.filter((n) => !n.lu).length, [notifications])
+  const niveauActuel = useMemo(() => prof ? (niveauxConfig[prof.etoiles as keyof typeof niveauxConfig] || niveauxConfig[0]) : niveauxConfig[0], [prof])
+  const maxActivite = useMemo(() => Math.max(...activite7j.map((a) => a.count), 1), [activite7j])
   const salutation = useMemo(() => getSalutation(), [])
-
-  // ============================================================
-  // ACTIONS
-  // ============================================================
 
   const marquerToutesLues = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
-
-      await supabase
-        .from('notifications')
-        .update({ lu: true })
-        .eq('destinataire_id', user.id)
-        .eq('lu', false)
-
+      await supabase.from('notifications').update({ lu: true }).eq('destinataire_id', user.id).eq('lu', false)
       setNotifications(notifications.map((n) => ({ ...n, lu: true })))
     } catch (err) {
       console.error(err)
@@ -579,18 +404,11 @@ export default function DashboardProfesseur() {
   const contacterAdmin = (type: 'masque' | 'banni') => {
     const nom = profil?.nom_complet || 'Prof'
     const messages: Record<string, string> = {
-      masque: `Bonjour Admin,\n\nJe suis ${nom} et je vois que mon profil a été masqué.\n\nMotif : ${profil?.motif_masquage || 'non précisé'}\n\nQue dois-je faire pour être réactivé ?\n\nMerci`,
-      banni: `Bonjour Admin,\n\nJe suis ${nom} et mon compte a été banni.\n\nMotif : ${profil?.motif_bannissement || 'non précisé'}\n\nPuis-je avoir plus d'informations ?\n\nMerci`,
+      masque: `Bonjour Admin,\n\nJe suis ${nom} et mon profil a été masqué.\n\nMotif : ${profil?.motif_masquage || 'non précisé'}\n\nQue dois-je faire ?\n\nMerci`,
+      banni: `Bonjour Admin,\n\nJe suis ${nom} et mon compte a été banni.\n\nMotif : ${profil?.motif_bannissement || 'non précisé'}\n\nMerci`,
     }
-    window.open(
-      `https://wa.me/25377741482?text=${encodeURIComponent(messages[type])}`,
-      '_blank'
-    )
+    window.open(`https://wa.me/25377741482?text=${encodeURIComponent(messages[type])}`, '_blank')
   }
-
-  // ============================================================
-  // UTILITAIRES
-  // ============================================================
 
   const formaterDate = (date: string) => {
     const d = new Date(date)
@@ -599,15 +417,12 @@ export default function DashboardProfesseur() {
     const diffMin = Math.floor(diffMs / 60000)
     const diffH = Math.floor(diffMs / 3600000)
     const diffJ = Math.floor(diffMs / 86400000)
-
     if (diffMin < 1) return 'À l\'instant'
     if (diffMin < 60) return `Il y a ${diffMin} min`
     if (diffH < 24) return `Il y a ${diffH}h`
     if (diffJ < 7) return `Il y a ${diffJ}j`
     return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
   }
-
-  const formaterPrix = (n: number) => n.toLocaleString('fr-FR')
 
   const couleurStatutDemande = (statut: string) => {
     if (statut === 'acceptee') return 'bg-emerald-100 text-emerald-800 border-emerald-200'
@@ -624,28 +439,18 @@ export default function DashboardProfesseur() {
     return '⏳ En attente'
   }
 
-  // ============================================================
-  // RENDU — CHARGEMENT
-  // ============================================================
-
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-4">
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-          className="w-14 h-14 border-4 border-emerald-700 border-t-transparent rounded-full"
+          className="w-12 h-12 border-3 border-slate-900 border-t-transparent rounded-full"
         />
-        <p className="text-slate-500 text-sm font-medium">
-          Chargement de votre espace...
-        </p>
+        <p className="text-slate-500 text-sm font-medium">Chargement de votre espace...</p>
       </div>
     )
   }
-
-  // ============================================================
-  // RENDU — ERREUR
-  // ============================================================
 
   if (erreur || !profil || !prof) {
     return (
@@ -653,20 +458,16 @@ export default function DashboardProfesseur() {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-red-50 border-2 border-red-200 rounded-3xl p-8 max-w-md text-center"
+          className="bg-rose-50 border border-rose-200 rounded-2xl p-6 sm:p-8 max-w-md text-center"
         >
-          <div className="text-6xl mb-4">⚠️</div>
-          <h2 className="text-xl font-black text-slate-900 mb-2">
-            Erreur de chargement
-          </h2>
-          <p className="text-red-700 text-sm mb-6">
-            {erreur || 'Impossible de charger vos données'}
-          </p>
+          <div className="text-5xl mb-4">⚠️</div>
+          <h2 className="text-lg sm:text-xl font-black text-slate-900 mb-2">Erreur</h2>
+          <p className="text-rose-700 text-sm mb-6">{erreur || 'Impossible de charger'}</p>
           <button
             onClick={charger}
-            className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl font-bold text-sm shadow-lg"
+            className="px-5 py-3 bg-slate-900 text-white rounded-xl font-bold text-sm"
           >
-            🔄 Réessayer
+            Réessayer
           </button>
         </motion.div>
       </div>
@@ -674,45 +475,34 @@ export default function DashboardProfesseur() {
   }
 
   return (
-    <div className="space-y-6 pb-10">
-      {/* ============================================================ */}
-      {/* SECTION 1 : BANNIÈRE MASQUÉ / BANNI */}
-      {/* ============================================================ */}
+    <div className="space-y-4 sm:space-y-5 md:space-y-6 pb-10">
 
+      {/* BANNIÈRES */}
       <AnimatePresence>
         {statutCompte === 'banni' && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-br from-red-500 via-red-600 to-rose-700 rounded-3xl p-6 md:p-8 shadow-2xl text-white relative overflow-hidden"
+            className="bg-gradient-to-br from-rose-500 to-rose-700 rounded-2xl p-4 sm:p-6 shadow-xl text-white"
           >
-            <motion.div
-              className="absolute top-[-50px] right-[-50px] w-64 h-64 bg-white/10 rounded-full blur-3xl"
-              animate={{ x: [0, 30, 0], y: [0, -30, 0] }}
-              transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
-            />
-            <div className="relative z-10">
-              <div className="flex items-start gap-4 flex-wrap">
-                <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-4xl border-2 border-white/30 flex-shrink-0">
-                  🚫
+            <div className="flex items-start gap-3 sm:gap-4 flex-wrap">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-white/20 flex items-center justify-center text-2xl sm:text-3xl flex-shrink-0">
+                🚫
+              </div>
+              <div className="flex-1 min-w-[180px]">
+                <div className="text-[10px] font-bold uppercase tracking-wider mb-1 opacity-90">
+                  Statut du compte
                 </div>
-                <div className="flex-1 min-w-[200px]">
-                  <div className="text-xs font-bold uppercase tracking-wider mb-1 opacity-90">
-                    Statut du compte
-                  </div>
-                  <h2 className="text-2xl md:text-3xl font-black mb-3">
-                    COMPTE SUSPENDU
-                  </h2>
-                  <p className="text-sm text-red-100 mb-3">
-                    Motif : {profil.motif_bannissement || 'Non précisé'}
-                  </p>
-                  <button
-                    onClick={() => contacterAdmin('banni')}
-                    className="bg-white text-red-700 px-5 py-3 rounded-xl font-black shadow-xl hover:shadow-2xl transition-all flex items-center gap-2 text-sm"
-                  >
-                    📲 Contacter l'admin
-                  </button>
-                </div>
+                <h2 className="text-lg sm:text-xl font-black mb-2">COMPTE SUSPENDU</h2>
+                <p className="text-xs sm:text-sm text-rose-100 mb-3">
+                  Motif : {profil.motif_bannissement || 'Non précisé'}
+                </p>
+                <button
+                  onClick={() => contacterAdmin('banni')}
+                  className="bg-white text-rose-700 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm"
+                >
+                  📲 Contacter l'admin
+                </button>
               </div>
             </div>
           </motion.div>
@@ -723,49 +513,36 @@ export default function DashboardProfesseur() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="bg-gradient-to-br from-purple-500 via-purple-600 to-pink-700 rounded-3xl p-6 md:p-8 shadow-2xl text-white relative overflow-hidden"
+            className="bg-gradient-to-br from-purple-500 to-pink-700 rounded-2xl p-4 sm:p-6 shadow-xl text-white relative"
           >
-            <motion.div
-              className="absolute top-[-50px] right-[-50px] w-64 h-64 bg-white/10 rounded-full blur-3xl"
-              animate={{ x: [0, 30, 0], y: [0, -30, 0] }}
-              transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
-            />
             <button
               onClick={() => setBanniereMasque(false)}
-              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white text-sm z-20"
-              title="Masquer cette bannière"
+              className="absolute top-3 right-3 w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-xs"
             >
               ✕
             </button>
-            <div className="relative z-10">
-              <div className="flex items-start gap-4 flex-wrap">
-                <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-4xl border-2 border-white/30 flex-shrink-0">
-                  👻
-                </div>
-                <div className="flex-1 min-w-[200px]">
-                  <div className="text-xs font-bold uppercase tracking-wider mb-1 opacity-90">
-                    Statut du profil
-                  </div>
-                  <h2 className="text-2xl md:text-3xl font-black mb-3">
-                    PROFIL MASQUÉ
-                  </h2>
-                  <p className="text-sm text-purple-100 mb-3">
-                    Motif : {profil.motif_masquage || 'Non précisé'}
-                  </p>
-                  <div className="flex gap-2 flex-wrap">
-                    <button
-                      onClick={() => contacterAdmin('masque')}
-                      className="bg-white text-purple-700 px-5 py-3 rounded-xl font-black shadow-xl hover:shadow-2xl transition-all flex items-center gap-2 text-sm"
-                    >
-                      📲 Demander la réactivation
-                    </button>
-                    <Link
-                      href="/espace-professeur/statut"
-                      className="bg-white/20 backdrop-blur-sm text-white px-5 py-3 rounded-xl font-black hover:bg-white/30 transition-all flex items-center gap-2 text-sm border border-white/30"
-                    >
-                      👁️ Voir détails
-                    </Link>
-                  </div>
+            <div className="flex items-start gap-3 sm:gap-4 flex-wrap">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-white/20 flex items-center justify-center text-2xl sm:text-3xl flex-shrink-0">
+                👻
+              </div>
+              <div className="flex-1 min-w-[180px]">
+                <h2 className="text-lg sm:text-xl font-black mb-2">PROFIL MASQUÉ</h2>
+                <p className="text-xs sm:text-sm text-purple-100 mb-3">
+                  Motif : {profil.motif_masquage || 'Non précisé'}
+                </p>
+                <div className="flex gap-2 flex-wrap">
+                  <button
+                    onClick={() => contacterAdmin('masque')}
+                    className="bg-white text-purple-700 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm"
+                  >
+                    📲 Demander réactivation
+                  </button>
+                  <Link
+                    href="/espace-professeur/statut"
+                    className="bg-white/20 text-white px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm border border-white/30"
+                  >
+                    👁️ Détails
+                  </Link>
                 </div>
               </div>
             </div>
@@ -776,18 +553,18 @@ export default function DashboardProfesseur() {
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-br from-amber-500 via-orange-500 to-yellow-600 rounded-3xl p-5 border-2 border-amber-400 shadow-xl"
+            className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-4 sm:p-5 shadow-xl"
           >
-            <div className="flex items-start gap-4 flex-wrap">
-              <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-3xl border-2 border-white/30 flex-shrink-0">
+            <div className="flex items-start gap-3 sm:gap-4 flex-wrap">
+              <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-xl bg-white/20 flex items-center justify-center text-2xl sm:text-3xl flex-shrink-0">
                 ⏳
               </div>
-              <div className="flex-1 min-w-[200px]">
-                <h3 className="text-lg font-black text-white mb-1">
+              <div className="flex-1 min-w-[180px]">
+                <h3 className="text-base sm:text-lg font-black text-white mb-1">
                   Profil en attente d'approbation
                 </h3>
-                <p className="text-xs text-amber-100">
-                  Notre équipe vérifie vos documents. Cela prend généralement moins de 24h.
+                <p className="text-[11px] sm:text-xs text-amber-100">
+                  Notre équipe vérifie vos documents. Généralement moins de 24h.
                 </p>
               </div>
             </div>
@@ -795,164 +572,138 @@ export default function DashboardProfesseur() {
         )}
       </AnimatePresence>
 
-      {/* ============================================================ */}
-      {/* SECTION 2 : HEADER HERO PERSONNALISÉ */}
-      {/* ============================================================ */}
-
+      {/* HEADER HERO */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className={`bg-gradient-to-br ${niveauActuel.couleur} rounded-3xl p-6 md:p-8 shadow-2xl text-white relative overflow-hidden`}
+        className={`bg-gradient-to-br ${niveauActuel.couleur} rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-xl text-white relative overflow-hidden`}
       >
-        <motion.div
-          className="absolute top-[-50px] right-[-50px] w-64 h-64 bg-white/10 rounded-full blur-3xl"
-          animate={{ x: [0, 30, 0], y: [0, -30, 0] }}
-          transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
-        />
-        <motion.div
-          className="absolute bottom-[-50px] left-[-50px] w-48 h-48 bg-white/5 rounded-full blur-3xl"
-          animate={{ x: [0, -20, 0], y: [0, 20, 0] }}
-          transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
-        />
-
         <div className="relative z-10">
-          <div className="grid md:grid-cols-[1fr_auto] gap-6 items-center">
-            <div>
-              <div className="flex items-center gap-3 mb-2 flex-wrap">
-                <span className="text-3xl">{salutation.emoji}</span>
-                <h1 className="text-3xl md:text-4xl font-black">
-                  {salutation.texte}, {profil.prenom} !
-                </h1>
-              </div>
-              <p className="text-sm opacity-90 mb-4 max-w-xl">
-                {niveauActuel.emoji} Niveau {niveauActuel.label} · {niveauActuel.description}
-              </p>
-
-              <div className="flex flex-wrap gap-2 mb-5">
-                {prof.badge_admin && badgesConfig[prof.badge_admin as keyof typeof badgesConfig] && (
-                  <span className={`bg-gradient-to-r ${badgesConfig[prof.badge_admin as keyof typeof badgesConfig].couleur} backdrop-blur-sm px-3 py-1.5 rounded-full text-xs font-black shadow`}>
-                    {badgesConfig[prof.badge_admin as keyof typeof badgesConfig].emoji}{' '}
-                    {badgesConfig[prof.badge_admin as keyof typeof badgesConfig].label}
-                  </span>
-                )}
-                {prof.pionnier_illustre && (
-                  <span className="bg-gradient-to-r from-red-500 to-pink-600 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs font-black shadow">
-                    👑 Pionnier Illustre
-                  </span>
-                )}
-                {prof.pionnier && !prof.pionnier_illustre && (
-                  <span className="bg-gradient-to-r from-yellow-500 to-amber-600 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs font-black shadow">
-                    🏆 Pionnier
-                  </span>
-                )}
-                {prof.a_bac_s && (
-                  <span className="bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs font-black">
-                    🎓 Bac S
-                  </span>
-                )}
-                {prof.est_etudiant && (
-                  <span className="bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs font-black">
-                    🎓 Étudiant
-                  </span>
-                )}
-              </div>
-
-              <div className="flex gap-2 flex-wrap">
-                <Link
-                  href="/espace-professeur/demandes"
-                  className="bg-white text-slate-900 px-5 py-2.5 rounded-xl font-bold text-sm shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
-                >
-                  📥 Voir les demandes
-                </Link>
-                <Link
-                  href="/espace-professeur/statut"
-                  className="bg-white/20 backdrop-blur-sm text-white px-5 py-2.5 rounded-xl font-bold text-sm border border-white/30 hover:bg-white/30 transition-all flex items-center gap-2"
-                >
-                  🏅 Mon statut
-                </Link>
-              </div>
-            </div>
-
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 mb-4 sm:mb-6">
             {/* Avatar */}
-            <div className="relative w-32 h-32 mx-auto md:mx-0">
+            <div className="relative w-16 h-16 sm:w-24 sm:h-24 md:w-28 md:h-28 flex-shrink-0 mx-auto sm:mx-0">
               {profil.photo_url ? (
                 <img
                   src={profil.photo_url}
                   alt={profil.nom_complet}
-                  className="w-32 h-32 rounded-3xl object-cover shadow-2xl border-4 border-white/30"
+                  className="w-full h-full rounded-2xl sm:rounded-3xl object-cover shadow-xl border-4 border-white/30"
                 />
               ) : (
-                <div className="w-32 h-32 rounded-3xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white text-6xl shadow-2xl border-4 border-white/30">
+                <div className="w-full h-full rounded-2xl sm:rounded-3xl bg-white/20 flex items-center justify-center text-white text-3xl sm:text-5xl border-4 border-white/30">
                   👨‍🏫
                 </div>
               )}
               {profil.approuve && (
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="absolute -bottom-2 -right-2 w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white text-lg border-4 border-white shadow-lg"
-                >
+                <div className="absolute -bottom-1 -right-1 w-7 h-7 sm:w-9 sm:h-9 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs sm:text-base border-3 border-white shadow-lg">
                   ✓
-                </motion.div>
+                </div>
               )}
+            </div>
+
+            {/* Texte */}
+            <div className="flex-1 min-w-0 text-center sm:text-left">
+              <div className="flex items-center gap-2 justify-center sm:justify-start mb-1">
+                <span className="text-xl sm:text-2xl">{salutation.emoji}</span>
+                <h1 className="text-lg sm:text-2xl md:text-3xl font-black leading-tight truncate">
+                  {salutation.texte}, {profil.prenom} !
+                </h1>
+              </div>
+              <p className="text-[11px] sm:text-sm opacity-90 mb-3">
+                {niveauActuel.emoji} Niveau {niveauActuel.label}
+              </p>
+
+              <div className="flex flex-wrap gap-1.5 sm:gap-2 justify-center sm:justify-start">
+                {prof.badge_admin && badgesConfig[prof.badge_admin as keyof typeof badgesConfig] && (
+                  <span className={`bg-gradient-to-r ${badgesConfig[prof.badge_admin as keyof typeof badgesConfig].couleur} px-2.5 py-1 rounded-full text-[10px] font-black shadow`}>
+                    {badgesConfig[prof.badge_admin as keyof typeof badgesConfig].emoji} {badgesConfig[prof.badge_admin as keyof typeof badgesConfig].label}
+                  </span>
+                )}
+                {prof.pionnier_illustre && (
+                  <span className="bg-gradient-to-r from-red-500 to-pink-600 px-2.5 py-1 rounded-full text-[10px] font-black shadow">
+                    👑 Pionnier Illustre
+                  </span>
+                )}
+                {prof.pionnier && !prof.pionnier_illustre && (
+                  <span className="bg-gradient-to-r from-yellow-500 to-amber-600 px-2.5 py-1 rounded-full text-[10px] font-black shadow">
+                    🏆 Pionnier
+                  </span>
+                )}
+                {prof.a_bac_s && (
+                  <span className="bg-white/20 px-2.5 py-1 rounded-full text-[10px] font-black">
+                    🎓 Bac S
+                  </span>
+                )}
+                {prof.est_etudiant && (
+                  <span className="bg-white/20 px-2.5 py-1 rounded-full text-[10px] font-black">
+                    🎓 Étudiant
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
+          {/* Boutons */}
+          <div className="flex gap-2 flex-wrap justify-center sm:justify-start">
+            <Link
+              href="/espace-professeur/demandes"
+              className="bg-white text-slate-900 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm shadow-lg active:scale-95 transition-transform"
+            >
+              📥 Voir les demandes
+            </Link>
+            <Link
+              href="/espace-professeur/statut"
+              className="bg-white/20 text-white px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm border border-white/30 active:scale-95 transition-transform"
+            >
+              🏅 Mon statut
+            </Link>
+          </div>
+
           {/* Barre complétion */}
-          <div className="mt-6 p-4 bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20">
+          <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-white/10 rounded-xl sm:rounded-2xl border border-white/20">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-black uppercase tracking-wider">
-                📊 Complétion du profil
+              <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider">
+                📊 Complétion
               </span>
-              <span className="text-lg font-black">{completion}%</span>
+              <span className="text-base sm:text-lg font-black">{completion}%</span>
             </div>
-            <div className="h-2 bg-white/20 rounded-full overflow-hidden">
+            <div className="h-1.5 sm:h-2 bg-white/20 rounded-full overflow-hidden">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${completion}%` }}
                 transition={{ duration: 1, delay: 0.3 }}
-                className="h-full bg-gradient-to-r from-yellow-400 via-amber-400 to-emerald-400 rounded-full"
+                className="h-full bg-gradient-to-r from-yellow-400 to-emerald-400 rounded-full"
               />
             </div>
-            {completion < 100 && (
-              <div className="text-[10px] mt-2 opacity-90 font-bold">
-                💡 Complétez votre profil pour attirer plus de parents
-              </div>
-            )}
           </div>
         </div>
       </motion.div>
 
-      {/* ============================================================ */}
-      {/* SECTION 3 : NOTIFICATIONS RÉCENTES (si non lues) */}
-      {/* ============================================================ */}
-
+      {/* NOTIFICATIONS */}
       {notifsNonLues > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-white/80 backdrop-blur-xl rounded-3xl p-5 border-2 border-blue-200 shadow-xl"
+          className="bg-white rounded-2xl p-4 sm:p-5 border-2 border-blue-200 shadow-sm"
         >
-          <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+          <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
             <div className="flex items-center gap-2">
-              <span className="text-2xl">🔔</span>
-              <h3 className="font-black text-slate-900">
-                {notifsNonLues} nouvelle{notifsNonLues > 1 ? 's' : ''} notification{notifsNonLues > 1 ? 's' : ''}
+              <span className="text-xl sm:text-2xl">🔔</span>
+              <h3 className="font-bold text-slate-900 text-sm sm:text-base">
+                {notifsNonLues} nouvelle{notifsNonLues > 1 ? 's' : ''}
               </h3>
             </div>
             <div className="flex gap-2">
               <button
                 onClick={() => setNotifsOuvertes(!notifsOuvertes)}
-                className="text-xs font-bold text-blue-700 hover:text-blue-800"
+                className="text-[11px] sm:text-xs font-bold text-blue-700"
               >
-                {notifsOuvertes ? 'Masquer' : 'Voir tout'}
+                {notifsOuvertes ? 'Masquer' : 'Voir'}
               </button>
               <button
                 onClick={marquerToutesLues}
-                className="text-xs font-bold text-emerald-700 hover:text-emerald-800"
+                className="text-[11px] sm:text-xs font-bold text-emerald-700"
               >
-                Tout marquer lu
+                Marquer lu
               </button>
             </div>
           </div>
@@ -966,30 +717,28 @@ export default function DashboardProfesseur() {
                 className="overflow-hidden"
               >
                 <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {notifications
-                    .filter((n) => !n.lu)
-                    .map((n) => (
-                      <Link
-                        key={n.id}
-                        href={n.lien || '#'}
-                        className="block bg-blue-50 rounded-xl p-3 border border-blue-100 hover:bg-blue-100 transition-colors"
-                      >
-                        <div className="flex items-start gap-2">
-                          <div className="w-2 h-2 rounded-full bg-blue-500 mt-2 flex-shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <div className="font-bold text-slate-900 text-sm truncate">
-                              {n.titre}
-                            </div>
-                            <div className="text-xs text-slate-600 line-clamp-2">
-                              {n.contenu}
-                            </div>
-                            <div className="text-[10px] text-slate-500 mt-1">
-                              {formaterDate(n.created_at)}
-                            </div>
+                  {notifications.filter((n) => !n.lu).map((n) => (
+                    <Link
+                      key={n.id}
+                      href={n.lien || '#'}
+                      className="block bg-blue-50 rounded-xl p-3 border border-blue-100 active:bg-blue-100"
+                    >
+                      <div className="flex items-start gap-2">
+                        <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="font-bold text-slate-900 text-xs sm:text-sm truncate">
+                            {n.titre}
+                          </div>
+                          <div className="text-[11px] sm:text-xs text-slate-600 line-clamp-2">
+                            {n.contenu}
+                          </div>
+                          <div className="text-[10px] text-slate-500 mt-1">
+                            {formaterDate(n.created_at)}
                           </div>
                         </div>
-                      </Link>
-                    ))}
+                      </div>
+                    </Link>
+                  ))}
                 </div>
               </motion.div>
             )}
@@ -997,74 +746,34 @@ export default function DashboardProfesseur() {
         </motion.div>
       )}
 
-      {/* ============================================================ */}
-      {/* SECTION 4 : 5 KPI ANIMÉS */}
-      {/* ============================================================ */}
-
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+      {/* 5 KPI */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
         {[
-          {
-            label: 'Demandes',
-            valeur: stats.demandes_total,
-            emoji: '📥',
-            couleur: 'from-blue-500 to-blue-600',
-            href: '/espace-professeur/demandes',
-            alerte: stats.demandes_attente > 0 ? `${stats.demandes_attente} en attente` : null,
-          },
-          {
-            label: 'Élèves',
-            valeur: stats.eleves_total,
-            emoji: '👨‍🎓',
-            couleur: 'from-emerald-500 to-emerald-600',
-            href: '/espace-professeur/eleves',
-            alerte: null,
-          },
-          {
-            label: 'Créneaux',
-            valeur: stats.creneaux,
-            emoji: '📅',
-            couleur: 'from-purple-500 to-purple-600',
-            href: '/espace-professeur/disponibilites',
-            alerte: stats.creneaux < 6 ? 'Ajoutez +' : null,
-          },
-          {
-            label: 'Note',
-            valeur: prof.note_moyenne > 0 ? prof.note_moyenne.toFixed(1) : '—',
-            emoji: '⭐',
-            couleur: 'from-amber-500 to-amber-600',
-            href: '/espace-professeur/statut',
-            alerte: null,
-          },
-          {
-            label: 'Étoiles',
-            valeur: `${prof.etoiles}/3`,
-            emoji: '🌟',
-            couleur: 'from-yellow-500 to-orange-600',
-            href: '/espace-professeur/statut',
-            alerte: null,
-          },
+          { label: 'Demandes', valeur: stats.demandes_total, emoji: '📥', couleur: 'from-blue-500 to-blue-600', href: '/espace-professeur/demandes', alerte: stats.demandes_attente > 0 ? stats.demandes_attente : null },
+          { label: 'Élèves', valeur: stats.eleves_total, emoji: '👨‍🎓', couleur: 'from-emerald-500 to-emerald-600', href: '/espace-professeur/eleves', alerte: null },
+          { label: 'Créneaux', valeur: stats.creneaux, emoji: '📅', couleur: 'from-purple-500 to-purple-600', href: '/espace-professeur/disponibilites', alerte: stats.creneaux < 6 ? '+' : null },
+          { label: 'Note', valeur: prof.note_moyenne > 0 ? prof.note_moyenne.toFixed(1) : '—', emoji: '⭐', couleur: 'from-amber-500 to-amber-600', href: '/espace-professeur/statut', alerte: null },
+          { label: 'Étoiles', valeur: `${prof.etoiles}/3`, emoji: '🌟', couleur: 'from-yellow-500 to-orange-600', href: '/espace-professeur/statut', alerte: null },
         ].map((s, i) => (
           <motion.div
             key={s.label}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.15 + i * 0.05 }}
+            transition={{ duration: 0.4, delay: 0.1 + i * 0.05 }}
           >
             <Link href={s.href}>
-              <div className="bg-white/80 backdrop-blur-xl rounded-2xl p-4 border border-white/80 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all relative overflow-hidden">
-                <div
-                  className={`w-11 h-11 rounded-xl bg-gradient-to-br ${s.couleur} flex items-center justify-center text-white text-xl shadow-lg mb-2`}
-                >
+              <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-slate-200 shadow-sm active:scale-95 transition-transform relative">
+                <div className={`w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br ${s.couleur} flex items-center justify-center text-white text-lg sm:text-xl shadow-md mb-2`}>
                   {s.emoji}
                 </div>
-                <div className="text-2xl font-black text-slate-900 mb-1">
+                <div className="text-xl sm:text-2xl font-black text-slate-900 mb-0.5">
                   {s.valeur}
                 </div>
                 <div className="text-[10px] text-slate-500 font-bold uppercase">
                   {s.label}
                 </div>
                 {s.alerte && (
-                  <div className="absolute top-2 right-2 text-[9px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-black">
+                  <div className="absolute top-2 right-2 text-[9px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-black">
                     {s.alerte}
                   </div>
                 )}
@@ -1074,31 +783,24 @@ export default function DashboardProfesseur() {
         ))}
       </div>
 
-      {/* ============================================================ */}
-      {/* SECTION 5 : GRAPHIQUE ACTIVITÉ 7 JOURS */}
-      {/* ============================================================ */}
-
+      {/* GRAPHIQUE 7 JOURS */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 border border-white/80 shadow-xl"
+        className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-200 shadow-sm"
       >
-        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white text-xl shadow-lg">
-              📊
-            </div>
-            <div>
-              <h3 className="font-black text-slate-900">Activité (7 derniers jours)</h3>
-              <p className="text-[10px] text-slate-500">
-                Demandes reçues par jour
-              </p>
-            </div>
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white text-lg sm:text-xl shadow-md">
+            📊
+          </div>
+          <div>
+            <h3 className="font-bold text-slate-900 text-sm sm:text-base">Activité (7 jours)</h3>
+            <p className="text-[10px] text-slate-500">Demandes reçues</p>
           </div>
         </div>
 
-        <div className="flex items-end justify-between gap-1 h-32">
+        <div className="flex items-end justify-between gap-1 h-24 sm:h-32">
           {activite7j.map((a, i) => (
             <div key={i} className="flex-1 flex flex-col items-center group">
               <div className="text-[9px] text-slate-500 font-black mb-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -1109,11 +811,8 @@ export default function DashboardProfesseur() {
                 animate={{ height: `${Math.max((a.count / maxActivite) * 100, 4)}%` }}
                 transition={{ delay: 0.35 + i * 0.05, duration: 0.5 }}
                 className={`w-full rounded-t-md ${
-                  a.count > 0
-                    ? 'bg-gradient-to-t from-cyan-500 to-blue-400'
-                    : 'bg-slate-200'
+                  a.count > 0 ? 'bg-gradient-to-t from-cyan-500 to-blue-400' : 'bg-slate-200'
                 }`}
-                title={`${a.count} demande(s)`}
               />
               <div className="text-[9px] text-slate-400 font-bold mt-1 capitalize">
                 {a.label}
@@ -1123,25 +822,20 @@ export default function DashboardProfesseur() {
         </div>
       </motion.div>
 
-      {/* ============================================================ */}
-      {/* SECTION 6 : COACH IA — PROCHAINES ACTIONS */}
-      {/* ============================================================ */}
-
+      {/* COACH IA */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.35 }}
-        className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-3xl p-6 border-2 border-purple-200 shadow-xl"
+        className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl sm:rounded-3xl p-4 sm:p-6 border-2 border-purple-200 shadow-sm"
       >
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center text-white text-2xl shadow-lg">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center text-white text-xl sm:text-2xl shadow-md">
             🤖
           </div>
           <div>
-            <h3 className="font-black text-slate-900 text-lg">Coach IA</h3>
-            <p className="text-xs text-slate-500">
-              Actions pour progresser plus vite
-            </p>
+            <h3 className="font-bold text-slate-900 text-base sm:text-lg">Coach IA</h3>
+            <p className="text-[11px] text-slate-500">Actions pour progresser</p>
           </div>
         </div>
 
@@ -1152,68 +846,50 @@ export default function DashboardProfesseur() {
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.4 + i * 0.05 }}
-              className={`rounded-xl p-3 border-2 flex items-start gap-3 ${
-                c.priorite === 'haute'
-                  ? 'bg-red-50 border-red-200'
-                  : c.priorite === 'moyenne'
-                  ? 'bg-amber-50 border-amber-200'
-                  : 'bg-white border-purple-100'
+              className={`rounded-xl p-2.5 sm:p-3 border flex items-start gap-2 sm:gap-3 ${
+                c.priorite === 'haute' ? 'bg-rose-50 border-rose-200' :
+                c.priorite === 'moyenne' ? 'bg-amber-50 border-amber-200' :
+                'bg-white border-purple-100'
               }`}
             >
-              <span className="text-xl flex-shrink-0">{c.emoji}</span>
-              <div className="flex-1">
-                <p className="text-sm text-slate-800 font-medium">{c.texte}</p>
-              </div>
-              <span
-                className={`text-[9px] px-2 py-0.5 rounded-full font-black uppercase flex-shrink-0 ${
-                  c.priorite === 'haute'
-                    ? 'bg-red-500 text-white'
-                    : c.priorite === 'moyenne'
-                    ? 'bg-amber-500 text-white'
-                    : 'bg-purple-200 text-purple-700'
-                }`}
-              >
-                {c.priorite}
-              </span>
+              <span className="text-lg sm:text-xl flex-shrink-0">{c.emoji}</span>
+              <p className="text-[12px] sm:text-sm text-slate-800 font-medium flex-1 leading-snug">
+                {c.texte}
+              </p>
             </motion.div>
           ))}
         </div>
       </motion.div>
 
-      {/* ============================================================ */}
-      {/* SECTION 7 : DERNIÈRES DEMANDES */}
-      {/* ============================================================ */}
-
+      {/* DERNIÈRES DEMANDES */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 border border-white/80 shadow-xl"
+        className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-200 shadow-sm"
       >
-        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+        <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xl shadow-lg">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-lg sm:text-xl shadow-md">
               📥
             </div>
             <div>
-              <h3 className="font-black text-slate-900">Dernières demandes</h3>
-              <p className="text-[10px] text-slate-500">
-                Les 3 plus récentes
-              </p>
+              <h3 className="font-bold text-slate-900 text-sm sm:text-base">Dernières demandes</h3>
+              <p className="text-[10px] text-slate-500">Les 3 plus récentes</p>
             </div>
           </div>
           <Link
             href="/espace-professeur/demandes"
-            className="text-xs font-bold text-blue-700 hover:text-blue-800"
+            className="text-[11px] sm:text-xs font-bold text-blue-700"
           >
             Voir tout →
           </Link>
         </div>
 
         {demandesRecentes.length === 0 ? (
-          <div className="text-center py-8">
-            <div className="text-4xl mb-2">📭</div>
-            <p className="text-slate-500 text-sm">Aucune demande pour le moment</p>
+          <div className="text-center py-6">
+            <div className="text-3xl mb-2">📭</div>
+            <p className="text-slate-500 text-xs sm:text-sm">Aucune demande pour le moment</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -1223,22 +899,20 @@ export default function DashboardProfesseur() {
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.45 + i * 0.05 }}
-                className="bg-slate-50 rounded-xl p-3 border border-slate-200 flex items-center gap-3 flex-wrap"
+                className="bg-slate-50 rounded-xl p-3 border border-slate-200 flex items-center gap-3"
               >
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-lg flex-shrink-0">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-base sm:text-lg flex-shrink-0">
                   👨‍👩‍👧
                 </div>
-                <div className="flex-1 min-w-[150px]">
-                  <div className="font-bold text-slate-900 text-sm">
+                <div className="flex-1 min-w-0">
+                  <div className="font-bold text-slate-900 text-xs sm:text-sm truncate">
                     {d.parent_nom}
                   </div>
-                  <div className="text-[10px] text-slate-500">
-                    {d.matiere || 'Matière non spécifiée'} · {formaterDate(d.created_at)}
+                  <div className="text-[10px] text-slate-500 truncate">
+                    {d.matiere || 'Non spécifié'} · {formaterDate(d.created_at)}
                   </div>
                 </div>
-                <span
-                  className={`text-[10px] px-2 py-1 rounded-full font-black border ${couleurStatutDemande(d.statut)}`}
-                >
+                <span className={`text-[9px] px-2 py-1 rounded-full font-bold border flex-shrink-0 ${couleurStatutDemande(d.statut)}`}>
                   {labelStatutDemande(d.statut)}
                 </span>
               </motion.div>
@@ -1247,35 +921,24 @@ export default function DashboardProfesseur() {
         )}
       </motion.div>
 
-      {/* ============================================================ */}
-      {/* SECTION 8 : DERNIERS AVIS */}
-      {/* ============================================================ */}
-
+      {/* DERNIERS AVIS */}
       {avisRecents.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.45 }}
-          className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 border border-white/80 shadow-xl"
+          className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-200 shadow-sm"
         >
-          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+          <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white text-xl shadow-lg">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white text-lg sm:text-xl shadow-md">
                 ⭐
               </div>
               <div>
-                <h3 className="font-black text-slate-900">Derniers avis</h3>
-                <p className="text-[10px] text-slate-500">
-                  Ce que disent vos élèves
-                </p>
+                <h3 className="font-bold text-slate-900 text-sm sm:text-base">Derniers avis</h3>
+                <p className="text-[10px] text-slate-500">Ce que disent vos élèves</p>
               </div>
             </div>
-            <Link
-              href="/espace-professeur/statut"
-              className="text-xs font-bold text-amber-700 hover:text-amber-800"
-            >
-              Voir tout →
-            </Link>
           </div>
 
           <div className="space-y-2">
@@ -1288,13 +951,13 @@ export default function DashboardProfesseur() {
                 className="bg-amber-50 rounded-xl p-3 border border-amber-200"
               >
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-sm">{'⭐'.repeat(a.note)}</span>
+                  <span className="text-xs sm:text-sm">{'⭐'.repeat(a.note)}</span>
                   <span className="text-[10px] text-slate-500">
                     {formaterDate(a.created_at)}
                   </span>
                 </div>
                 {a.commentaire && (
-                  <p className="text-xs text-slate-700 italic line-clamp-2">
+                  <p className="text-[11px] sm:text-xs text-slate-700 italic line-clamp-2">
                     « {a.commentaire} »
                   </p>
                 )}
@@ -1304,31 +967,28 @@ export default function DashboardProfesseur() {
         </motion.div>
       )}
 
-      {/* ============================================================ */}
-      {/* SECTION 9 : ACTIONS RAPIDES */}
-      {/* ============================================================ */}
-
+      {/* ACTIONS RAPIDES */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
-        className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 border border-white/80 shadow-xl"
+        className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-200 shadow-sm"
       >
-        <h3 className="font-black text-slate-900 mb-4 flex items-center gap-2">
-          <span className="text-xl">🚀</span>
+        <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2 text-sm sm:text-base">
+          <span className="text-lg sm:text-xl">🚀</span>
           <span>Actions rapides</span>
         </h3>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3">
           {[
-            { href: '/espace-professeur/profil', label: 'Modifier profil', emoji: '👤', couleur: 'from-blue-500 to-blue-600' },
+            { href: '/espace-professeur/profil', label: 'Profil', emoji: '👤', couleur: 'from-blue-500 to-blue-600' },
             { href: '/espace-professeur/disponibilites', label: 'Horaires', emoji: '📅', couleur: 'from-purple-500 to-purple-600' },
             { href: '/espace-professeur/matieres', label: 'Matières', emoji: '📚', couleur: 'from-emerald-500 to-emerald-600' },
             { href: '/espace-professeur/tarifs', label: 'Tarifs', emoji: '💰', couleur: 'from-amber-500 to-amber-600' },
             { href: '/espace-professeur/documents', label: 'Documents', emoji: '📎', couleur: 'from-pink-500 to-pink-600' },
             { href: '/espace-professeur/demandes', label: 'Demandes', emoji: '📥', couleur: 'from-cyan-500 to-blue-600' },
-            { href: '/espace-professeur/eleves', label: 'Mes élèves', emoji: '👨‍🎓', couleur: 'from-indigo-500 to-indigo-600' },
-            { href: '/espace-professeur/apercu', label: 'Aperçu public', emoji: '👁️', couleur: 'from-rose-500 to-pink-600' },
+            { href: '/espace-professeur/eleves', label: 'Élèves', emoji: '👨‍🎓', couleur: 'from-indigo-500 to-indigo-600' },
+            { href: '/espace-professeur/apercu', label: 'Aperçu', emoji: '👁️', couleur: 'from-rose-500 to-pink-600' },
           ].map((a, i) => (
             <motion.div
               key={a.href}
@@ -1337,13 +997,11 @@ export default function DashboardProfesseur() {
               transition={{ delay: 0.55 + i * 0.03 }}
             >
               <Link href={a.href}>
-                <div className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-white border-2 border-slate-200 hover:border-emerald-400 hover:shadow-lg hover:-translate-y-1 transition-all text-center">
-                  <div
-                    className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${a.couleur} flex items-center justify-center text-white text-2xl shadow-md`}
-                  >
+                <div className="flex flex-col items-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-white border border-slate-200 active:scale-95 transition-transform text-center">
+                  <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br ${a.couleur} flex items-center justify-center text-white text-lg sm:text-xl shadow-md`}>
                     {a.emoji}
                   </div>
-                  <span className="font-bold text-slate-700 text-xs">
+                  <span className="font-bold text-slate-700 text-[10px] sm:text-xs">
                     {a.label}
                   </span>
                 </div>
@@ -1353,37 +1011,29 @@ export default function DashboardProfesseur() {
         </div>
       </motion.div>
 
-      {/* ============================================================ */}
-      {/* SECTION 10 : SUPPORT WHATSAPP */}
-      {/* ============================================================ */}
-
+      {/* SUPPORT */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.7 }}
-        className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-3xl p-6 shadow-2xl text-white relative overflow-hidden"
+        className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl text-white"
       >
-        <motion.div
-          className="absolute top-[-50px] right-[-50px] w-64 h-64 bg-white/10 rounded-full blur-3xl"
-          animate={{ x: [0, 30, 0], y: [0, -30, 0] }}
-          transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
-        />
-        <div className="relative z-10 flex items-start gap-4 flex-wrap">
-          <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-3xl border border-white/30 flex-shrink-0">
+        <div className="flex items-start gap-3 sm:gap-4 flex-wrap">
+          <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-xl bg-white/20 flex items-center justify-center text-2xl sm:text-3xl flex-shrink-0">
             💬
           </div>
-          <div className="flex-1 min-w-[200px]">
-            <h3 className="text-lg font-black mb-1">
+          <div className="flex-1 min-w-[180px]">
+            <h3 className="text-base sm:text-lg font-black mb-1">
               Besoin d'aide ?
             </h3>
-            <p className="text-xs text-emerald-100 mb-3">
-              Notre équipe est disponible 7j/7 pour vous accompagner.
+            <p className="text-[11px] sm:text-xs text-emerald-100 mb-3">
+              Disponible 7j/7 pour vous accompagner.
             </p>
             <a
               href="https://wa.me/25377741482"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-white text-green-700 px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-green-50 transition-colors shadow-lg"
+              className="inline-flex items-center gap-2 bg-white text-green-700 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm active:scale-95 transition-transform"
             >
               💬 Contacter le support
             </a>

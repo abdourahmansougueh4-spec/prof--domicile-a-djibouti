@@ -128,7 +128,7 @@ export async function POST(request: Request) {
         destinataire_id: admin.id,
         titre: '📩 Nouvelle demande',
         contenu: `${parent.nom_complet} souhaite contacter ${prof.nom_complet}`,
-        lien: `/abdrhmn-zou_2022-2032/demandes`,
+        lien: `/zx-4f8b2e-9d3a-ctrl/demandes`,
         lu: false,
       }))
 

@@ -218,28 +218,28 @@ export default function AdminDashboard() {
       valeur: stats.totalParents,
       emoji: '👨‍👩‍👧',
       couleur: 'from-blue-500 to-blue-600',
-      href: '/abdrhmn-zou_2022-2032/parents-liste',
+      href: '/zx-4f8b2e-9d3a-ctrl/parents-liste',
     },
     {
       label: 'Professeurs',
       valeur: stats.totalProfs,
       emoji: '👨‍🏫',
       couleur: 'from-emerald-500 to-emerald-600',
-      href: '/abdrhmn-zou_2022-2032/profs-liste',
+      href: '/zx-4f8b2e-9d3a-ctrl/profs-liste',
     },
     {
       label: 'Demandes totales',
       valeur: stats.totalDemandes,
       emoji: '📥',
       couleur: 'from-purple-500 to-purple-600',
-      href: '/abdrhmn-zou_2022-2032/demandes',
+      href: '/zx-4f8b2e-9d3a-ctrl/demandes',
     },
     {
       label: 'Revenus du mois',
       valeur: `${stats.revenusMois.toLocaleString()} DJF`,
       emoji: '💰',
       couleur: 'from-amber-500 to-orange-600',
-      href: '/abdrhmn-zou_2022-2032/revenus',
+      href: '/zx-4f8b2e-9d3a-ctrl/revenus',
     },
   ]
 
@@ -249,7 +249,7 @@ export default function AdminDashboard() {
       valeur: stats.profsEnAttente,
       emoji: '⏳',
       couleur: 'from-amber-500 to-orange-600',
-      href: '/abdrhmn-zou_2022-2032/profs',
+      href: '/zx-4f8b2e-9d3a-ctrl/profs',
       urgent: stats.profsEnAttente > 0,
     },
     {
@@ -257,7 +257,7 @@ export default function AdminDashboard() {
       valeur: stats.demandesEnAttente,
       emoji: '📥',
       couleur: 'from-blue-500 to-indigo-600',
-      href: '/abdrhmn-zou_2022-2032/demandes/en-attente',
+      href: '/zx-4f8b2e-9d3a-ctrl/demandes/en-attente',
       urgent: stats.demandesEnAttente > 0,
     },
     {
@@ -265,7 +265,7 @@ export default function AdminDashboard() {
       valeur: stats.demandesPreAcceptees,
       emoji: '👍',
       couleur: 'from-teal-500 to-emerald-600',
-      href: '/abdrhmn-zou_2022-2032/demandes/a-valider',
+      href: '/zx-4f8b2e-9d3a-ctrl/demandes/a-valider',
       urgent: stats.demandesPreAcceptees > 0,
     },
     {
@@ -273,7 +273,7 @@ export default function AdminDashboard() {
       valeur: stats.paiementsEnAttente,
       emoji: '💳',
       couleur: 'from-pink-500 to-rose-600',
-      href: '/abdrhmn-zou_2022-2032/paiements-parents',
+      href: '/zx-4f8b2e-9d3a-ctrl/paiements-parents',
       urgent: stats.paiementsEnAttente > 0,
     },
     {
@@ -281,7 +281,7 @@ export default function AdminDashboard() {
       valeur: stats.signalements,
       emoji: '🚨',
       couleur: 'from-red-500 to-red-600',
-      href: '/abdrhmn-zou_2022-2032/signalements',
+      href: '/zx-4f8b2e-9d3a-ctrl/signalements',
       urgent: stats.signalements > 0,
     },
     {
@@ -289,7 +289,7 @@ export default function AdminDashboard() {
       valeur: stats.avisSignales,
       emoji: '⚠️',
       couleur: 'from-orange-500 to-red-600',
-      href: '/abdrhmn-zou_2022-2032/avis',
+      href: '/zx-4f8b2e-9d3a-ctrl/avis',
       urgent: stats.avisSignales > 0,
     },
   ]
@@ -452,49 +452,49 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
             {
-              href: '/abdrhmn-zou_2022-2032/profs',
+              href: '/zx-4f8b2e-9d3a-ctrl/profs',
               label: 'Valider un prof',
               emoji: '✅',
               couleur: 'from-emerald-500 to-teal-600',
             },
             {
-              href: '/abdrhmn-zou_2022-2032/inscription-manuelle',
+              href: '/zx-4f8b2e-9d3a-ctrl/inscription-manuelle',
               label: 'Créer un compte',
               emoji: '➕',
               couleur: 'from-blue-500 to-indigo-600',
             },
             {
-              href: '/abdrhmn-zou_2022-2032/demandes/a-valider',
+              href: '/zx-4f8b2e-9d3a-ctrl/demandes/a-valider',
               label: 'Valider une demande',
               emoji: '📥',
               couleur: 'from-purple-500 to-pink-600',
             },
             {
-              href: '/abdrhmn-zou_2022-2032/notifications',
+              href: '/zx-4f8b2e-9d3a-ctrl/notifications',
               label: 'Envoyer une notif',
               emoji: '📢',
               couleur: 'from-amber-500 to-orange-600',
             },
             {
-              href: '/abdrhmn-zou_2022-2032/badges',
+              href: '/zx-4f8b2e-9d3a-ctrl/badges',
               label: 'Donner un badge',
               emoji: '🏅',
               couleur: 'from-yellow-500 to-amber-600',
             },
             {
-              href: '/abdrhmn-zou_2022-2032/paiements-parents',
+              href: '/zx-4f8b2e-9d3a-ctrl/paiements-parents',
               label: 'Valider paiement',
               emoji: '💰',
               couleur: 'from-pink-500 to-rose-600',
             },
             {
-              href: '/abdrhmn-zou_2022-2032/signalements',
+              href: '/zx-4f8b2e-9d3a-ctrl/signalements',
               label: 'Voir signalements',
               emoji: '🚨',
               couleur: 'from-red-500 to-red-600',
             },
             {
-              href: '/abdrhmn-zou_2022-2032/statistiques',
+              href: '/zx-4f8b2e-9d3a-ctrl/statistiques',
               label: 'Voir statistiques',
               emoji: '📈',
               couleur: 'from-cyan-500 to-blue-600',
@@ -538,7 +538,7 @@ export default function AdminDashboard() {
             </h2>
           </div>
           <Link
-            href="/abdrhmn-zou_2022-2032/activite"
+            href="/zx-4f8b2e-9d3a-ctrl/activite"
             className="text-xs font-bold text-purple-400 hover:text-purple-300"
           >
             Voir tout →

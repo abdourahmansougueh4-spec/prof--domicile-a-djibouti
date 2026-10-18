@@ -1,3 +1,4 @@
+
 'use client'
 
 import { useState, useEffect, useMemo, useRef } from 'react'
@@ -88,7 +89,6 @@ const FAQ_ITEMS = [
   { q: 'Où se passent les cours ?', r: 'Selon la préférence du prof : chez lui, chez vous, ou les deux.' },
 ]
 
-// Fallback si aucun prof en base
 const PROFS_FALLBACK: ProfEnVedette[] = [
   { id: '1', nom: 'Hassan A.', matiere: 'Coran & Tajwid', note_moyenne: 4.9, nb_avis: 82, ville: 'Balbala', emoji: '📖', couleur: 'from-emerald-500 to-teal-600' },
   { id: '2', nom: 'Amina M.', matiere: 'Mathématiques', note_moyenne: 4.8, nb_avis: 64, ville: 'Héron', emoji: '📐', couleur: 'from-blue-500 to-indigo-600' },
@@ -96,6 +96,57 @@ const PROFS_FALLBACK: ProfEnVedette[] = [
   { id: '4', nom: 'Khadija S.', matiere: 'Français', note_moyenne: 5.0, nb_avis: 47, ville: 'Q1', emoji: '✍️', couleur: 'from-rose-500 to-pink-600' },
 ]
 
+// ============================================================
+// LOGO COMPOSANT
+// ============================================================
+
+function Logo({ size = 'md', onDark = false }: { size?: 'sm' | 'md' | 'lg'; onDark?: boolean }) {
+  const sizes = {
+    sm: { box: 'w-8 h-8', icon: 'w-6 h-6', djib: 'text-[8px]', super: 'text-sm' },
+    md: { box: 'w-10 h-10', icon: 'w-8 h-8', djib: 'text-[9px]', super: 'text-lg' },
+    lg: { box: 'w-14 h-14', icon: 'w-11 h-11', djib: 'text-xs', super: 'text-2xl' },
+  }
+  const s = sizes[size]
+
+  return (
+    <div className="flex items-center gap-2.5">
+      <div className={`${s.box} rounded-xl shadow-lg shadow-blue-600/20 flex-shrink-0`}>
+        <svg className={`${s.icon} w-full h-full`} viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id={`logoBg${size}`} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#1e3a8a" />
+              <stop offset="50%" stopColor="#2563eb" />
+              <stop offset="100%" stopColor="#059669" />
+            </linearGradient>
+            <radialGradient id={`logoGlow${size}`} cx="30%" cy="20%" r="70%">
+              <stop offset="0%" stopColor="white" stopOpacity="0.35" />
+              <stop offset="100%" stopColor="white" stopOpacity="0" />
+            </radialGradient>
+          </defs>
+          <rect width="120" height="120" rx="28" fill={`url(#logoBg${size})`} />
+          <rect width="120" height="120" rx="28" fill={`url(#logoGlow${size})`} />
+          <g transform="translate(60, 68)">
+            <path d="M0 -26 L36 -10 L0 8 L-36 -10 Z" fill="white" />
+            <path d="M-24 -2 L-24 16 Q-24 26 -12 26 L12 26 Q24 26 24 16 L24 -2 L0 8 Z" fill="white" opacity="0.85" />
+            <path d="M36 -10 Q43 -3 43 6" stroke="#fbbf24" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+            <circle cx="43" cy="9" r="3.5" fill="#fbbf24" />
+          </g>
+          <g transform="translate(93, 26)">
+            <path d="M0 -9 L2.6 -2.9 L9.4 -2.9 L4 -1 L6.2 5.6 L0 1.8 L-6.2 5.6 L-4 -1 L-9.4 -2.9 L-2.6 -2.9 Z" fill="#dc2626" />
+          </g>
+        </svg>
+      </div>
+      <div className="flex flex-col leading-none">
+        <span className={`${s.djib} font-black tracking-[0.18em] uppercase text-slate-400`}>
+          Djib
+        </span>
+        <span className={`${s.super} font-black tracking-tight -mt-0.5 ${onDark ? 'text-white' : 'text-slate-900'}`}>
+          Superprof
+        </span>
+      </div>
+    </div>
+  )
+}
 // ============================================================
 // COMPOSANTS
 // ============================================================
@@ -160,7 +211,6 @@ export default function HomePage() {
   const [rechercheNiveau, setRechercheNiveau] = useState('')
   const [enLigne, setEnLigne] = useState(12)
 
-  // Barre de progression scroll
   const { scrollYProgress } = useScroll()
   const progressX = useSpring(scrollYProgress, { stiffness: 100, damping: 30 })
 
@@ -184,7 +234,6 @@ export default function HomePage() {
           note_moyenne: noteMoy,
         })
 
-        // Charger profs en vedette
         const { data: vedette } = await supabase
           .from('professeurs')
           .select('id, nom, matiere, note_moyenne, nb_avis, ville')
@@ -215,20 +264,17 @@ export default function HomePage() {
     charger()
   }, [supabase])
 
-  // Scroll listener
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20)
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  // Bloquer scroll quand menu ouvert
   useEffect(() => {
     document.body.style.overflow = menuMobile ? 'hidden' : ''
     return () => { document.body.style.overflow = '' }
   }, [menuMobile])
 
-  // Compteur "en ligne" (faux live)
   useEffect(() => {
     const interval = setInterval(() => {
       setEnLigne((prev) => {
@@ -240,7 +286,6 @@ export default function HomePage() {
     return () => clearInterval(interval)
   }, [])
 
-  // Recherche
   const lancerRecherche = () => {
     const params = new URLSearchParams()
     if (rechercheMatiere) params.set('matiere', rechercheMatiere)
@@ -251,7 +296,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-white relative overflow-x-hidden">
 
-      {/* BARRE DE PROGRESSION SCROLL */}
+      {/* BARRE PROGRESSION */}
       <motion.div
         style={{ scaleX: progressX }}
         className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 via-emerald-500 to-blue-600 origin-left z-[60]"
@@ -265,11 +310,8 @@ export default function HomePage() {
       }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14 md:h-16">
-            <Link href="/" className="flex items-center gap-1.5 flex-shrink-0" onClick={() => setMenuMobile(false)}>
-              <span className="text-base sm:text-lg md:text-xl font-black bg-gradient-to-r from-blue-700 to-emerald-600 bg-clip-text text-transparent whitespace-nowrap">
-                Prof À Domicile
-              </span>
-              <span className="text-base sm:text-lg md:text-xl">🇩🇯</span>
+            <Link href="/" onClick={() => setMenuMobile(false)} className="flex-shrink-0">
+              <Logo size="md" />
             </Link>
 
             <nav className="hidden lg:flex items-center gap-0.5">
@@ -299,7 +341,6 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* MENU MOBILE */}
         <AnimatePresence>
           {menuMobile && (
             <motion.div
@@ -346,14 +387,12 @@ export default function HomePage() {
 
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
-            {/* TEXTE */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7 }}
               className="text-center lg:text-left order-2 lg:order-1"
             >
-              {/* Badge live */}
               <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white rounded-full border border-slate-200 shadow-sm mb-4">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -376,7 +415,6 @@ export default function HomePage() {
                 Soutien scolaire, Coran, langues, informatique, arts — des professeurs <strong className="text-slate-900">vérifiés</strong> et adaptés à votre enfant.
               </p>
 
-              {/* BARRE DE RECHERCHE HERO */}
               <motion.div
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -412,7 +450,6 @@ export default function HomePage() {
                 </div>
               </motion.div>
 
-              {/* CTA PRINCIPAUX */}
               <div className="flex flex-col sm:flex-row gap-3 mb-5 justify-center lg:justify-start">
                 <Link
                   href="/inscription"
@@ -431,7 +468,6 @@ export default function HomePage() {
               </div>
             </motion.div>
 
-            {/* VISUEL */}
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -439,7 +475,6 @@ export default function HomePage() {
               className="relative max-w-md mx-auto lg:mx-0 lg:max-w-none order-1 lg:order-2"
             >
               <div className="relative">
-                {/* Carte principale prof */}
                 <motion.div
                   animate={{ y: [0, -8, 0] }}
                   transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
@@ -469,7 +504,6 @@ export default function HomePage() {
                   </div>
                 </motion.div>
 
-                {/* Badges flottants */}
                 <motion.div
                   animate={{ y: [0, -10, 0] }}
                   transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
@@ -509,7 +543,7 @@ export default function HomePage() {
               { label: 'Professeurs vérifiés', valeur: stats.profs, emoji: '👨‍🏫', suffixe: '+' },
               { label: 'Parents inscrits', valeur: stats.parents + 40, emoji: '👨‍👩‍👧', suffixe: '+' },
               { label: 'Élèves accompagnés', valeur: stats.eleves, emoji: '🎓', suffixe: '+' },
-              { label: 'Note moyenne', valeur: Math.round(stats.note_moyenne * 10) / 10, emoji: '⭐', suffixe: '/5' },
+              { label: 'Note moyenne', valeur: (Math.round(stats.note_moyenne * 10) / 10) + 3.5, emoji: '⭐', suffixe: '/5' },
             ].map((s, i) => (
               <motion.div
                 key={s.label}
@@ -526,56 +560,6 @@ export default function HomePage() {
                 <div className="text-xs md:text-sm text-slate-600 font-medium leading-tight">{s.label}</div>
               </motion.div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ============================================================ */}
-      {/* PROFS EN VEDETTE */}
-      {/* ============================================================ */}
-      <section className="py-14 md:py-20 px-4 sm:px-6 lg:px-8 bg-white">
-        <div className="max-w-7xl mx-auto">
-          <SectionTitle
-            badge="⭐ Profs en vedette"
-            badgeColor="from-amber-500 to-orange-600"
-            titre="Les mieux notés cette semaine"
-            sousTitre="Découvrez des professeurs vérifiés et appréciés par les familles."
-          />
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {profsVedette.map((p, i) => (
-              <motion.div
-                key={p.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-30px' }}
-                transition={{ duration: 0.4, delay: i * 0.06 }}
-                whileHover={{ y: -4 }}
-                className="bg-white rounded-2xl p-5 border border-slate-200 hover:border-slate-300 shadow-sm hover:shadow-lg transition-all relative overflow-hidden group"
-              >
-                <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${p.couleur}`} />
-                <div className="absolute top-3 right-3 text-[9px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold">✓ VÉRIFIÉ</div>
-                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${p.couleur} flex items-center justify-center text-white text-2xl shadow-md mb-3 group-hover:scale-110 transition-transform`}>
-                  {p.emoji}
-                </div>
-                <h3 className="text-sm font-black text-slate-900 mb-1 truncate">{p.nom}</h3>
-                <p className="text-xs text-slate-500 mb-3 truncate">{p.matiere} · 📍 {p.ville}</p>
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-amber-400 text-xs">⭐</span>
-                  <span className="text-xs font-bold text-slate-900">{p.note_moyenne.toFixed(1)}</span>
-                  <span className="text-[10px] text-slate-500">· {p.nb_avis} avis</span>
-                </div>
-                <Link href={`/professeurs/${p.id}`} className="text-xs font-bold text-blue-700 hover:text-blue-900 inline-flex items-center gap-1 group-hover:gap-2 transition-all">
-                  Voir le profil <span>→</span>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
-
-          <div className="text-center mt-8">
-            <Link href="/professeurs" className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-700 to-indigo-600 text-white px-6 py-3.5 rounded-2xl font-bold shadow-lg shadow-blue-600/20 hover:shadow-xl hover:scale-[1.02] transition-all">
-              👨‍🏫 Voir tous les professeurs
-            </Link>
           </div>
         </div>
       </section>
@@ -604,9 +588,7 @@ export default function HomePage() {
                 className="bg-white rounded-2xl p-4 md:p-5 border border-slate-200 hover:border-slate-300 shadow-sm hover:shadow-lg transition-all relative"
               >
                 {m.populaire && (
-                  <div className="absolute top-3 right-3 text-[8px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-bold">
-                    🔥
-                  </div>
+                  <div className="absolute top-3 right-3 text-[8px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-bold">🔥</div>
                 )}
                 <div className={`w-11 h-11 md:w-12 md:h-12 rounded-2xl bg-gradient-to-br ${m.couleur} flex items-center justify-center text-white text-xl shadow-md mb-2.5`}>
                   {m.emoji}
@@ -615,9 +597,7 @@ export default function HomePage() {
                 <p className="text-[11px] md:text-xs text-slate-500 leading-relaxed mb-2 line-clamp-2">{m.desc}</p>
                 <div className="flex flex-wrap gap-1">
                   {m.tags.slice(0, 2).map((tag) => (
-                    <span key={tag} className="text-[9px] bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-semibold">
-                      {tag}
-                    </span>
+                    <span key={tag} className="text-[9px] bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-semibold">{tag}</span>
                   ))}
                 </div>
               </motion.div>
@@ -746,7 +726,7 @@ export default function HomePage() {
             badge="💬 Témoignages"
             badgeColor="from-amber-500 to-orange-600"
             titre="Ils nous font confiance"
-            sousTitre="Plus de 200 familles nous font déjà confiance à Djibouti."
+            sousTitre="beaucoup de familles nous font déjà confiance à Djibouti."
           />
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
@@ -927,16 +907,15 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
             <div className="col-span-2 md:col-span-1">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-base font-black bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">Prof À Domicile</span>
-                <span className="text-base">🇩🇯</span>
+              <div className="mb-4">
+                <Logo size="md" onDark />
               </div>
               <p className="text-xs text-slate-400 leading-relaxed mb-3">
                 La plateforme éducative de référence à Djibouti.
               </p>
               <div className="flex gap-2">
                 <a href="https://wa.me/25377741482" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full bg-slate-800 hover:bg-green-500 flex items-center justify-center transition-colors text-sm">💬</a>
-                <a href="mailto:contact@profadomicile.dj" className="w-9 h-9 rounded-full bg-slate-800 hover:bg-blue-500 flex items-center justify-center transition-colors text-sm">✉️</a>
+                <a href="mailto:contact@djibsuperprof.dj" className="w-9 h-9 rounded-full bg-slate-800 hover:bg-blue-500 flex items-center justify-center transition-colors text-sm">✉️</a>
               </div>
             </div>
 
@@ -971,7 +950,7 @@ export default function HomePage() {
 
           <div className="pt-5 border-t border-slate-800 flex flex-col md:flex-row items-center justify-between gap-3">
             <p className="text-[10px] text-slate-500 text-center md:text-left">
-              © 2026 Prof À Domicile Djibouti — Tous droits réservés
+              © 2026 Djib Superprof — Tous droits réservés
             </p>
             <div className="flex items-center gap-3 text-[10px] text-slate-500">
               <span className="flex items-center gap-1"><span>🔒</span><span>Paiements sécurisés</span></span>
