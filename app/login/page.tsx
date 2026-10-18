@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
-export default function LoginPage() {
+// 👇 1. On renomme votre composant en LoginForm (on enlève le "export default")
+function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = createClient()
@@ -282,5 +283,19 @@ export default function LoginPage() {
         </div>
       </motion.div>
     </div>
+  )
+}
+
+// 👇 2. La coquille de sécurité obligatoire pour Vercel (qui utilise VOTRE composant LoginForm)
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center">
+        <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full mb-4" />
+        <p className="text-slate-500 font-bold">Chargement de la page...</p>
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   )
 }
