@@ -15,7 +15,19 @@ const geistMono = Geist_Mono({
 const baseUrl = "https://prof-domicile-a-djibouti.vercel.app";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(baseUrl),manifest: '/manifest.webmanifest',
+  // 👇 CONFIGURATION APPLICATION MOBILE (iOS & Android)
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Djib Superprof",
+  },
+  other: {
+    'apple-mobile-web-app-capable': 'yes',
+  },
+  
+  metadataBase: new URL(baseUrl),
+  // 👇 LIGNE "manifest" SUPPRIMÉE ICI (Next.js le gère automatiquement)
+  
   title: {
     default: "Djib Superprof | Professeurs vérifiés à Djibouti",
     template: "%s | Djib Superprof",
