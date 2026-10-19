@@ -9,6 +9,8 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@capacitor/cli": "^7.6.9",
+    "@capacitor/core": "^8.5.3",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.109.0",
     "framer-motion": "^14.0.0",
