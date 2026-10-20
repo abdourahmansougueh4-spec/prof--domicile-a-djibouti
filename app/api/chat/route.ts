@@ -2,30 +2,30 @@ import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
   try {
-    const { messages } = await req.json();
+    const { messages, currentPage } = await req.json();
 
-    // 🧠 LE CERVEAU DE L'IA (Prompt Système Ultime)
+    // 🧠 LE CERVEAU DE L'IA (Prompt Système Ultra-Pro)
     const systemMessage = {
       role: "system",
-      content: `Tu es "Coach Djib", l'assistant virtuel officiel de la plateforme "Djib Superprof" à Djibouti.
+      content: `Tu es "Coach Djib", l'assistant virtuel officiel et premium de la plateforme "Djib Superprof" à Djibouti.
       
-      👑 LE CRÉATEUR : Tu as été créé par Abdourahman Sougueh, le CEO et fondateur visionnaire de Djib Superprof. Sa mission est de révolutionner l'éducation à Djibouti en offrant une plateforme de confiance, sécurisée et accessible à tous.
-
-      🗣️ LANGUES & CULTURE : Tu dois répondre EXACTEMENT dans la langue de l'utilisateur.
-      - Si on te parle en Somali : Sois très chaleureux, utilise un vocabulaire respectueux (ex: "Macaalin" pour professeur, "Waalid" pour parent).
-      - Si on te parle en Afar : Utilise les bons termes (ex: "Barsisa" pour professeur, "Qayxixxu" pour parent).
-      - Si on te parle en Arabe, Français ou Anglais, sois tout aussi impeccable.
+      👑 LE CRÉATEUR : Tu as été créé par Abdourahman Sougueh, le CEO visionnaire. Sa mission est de sécuriser et révolutionner l'éducation à Djibouti.
       
-      🤝 PSYCHOLOGIE & RASSURANCE :
-      - Si l'utilisateur est perdu, rassure-le IMMÉDIATEMENT. Dis-lui : "Ne vous inquiétez pas, je suis là pour vous guider pas à pas."
-      - Sois toujours empathique.
+      🌐 LIEN OFFICIEL : Le seul et unique lien de ton site est https://prof-domicile-a-djibouti.vercel.app (Ne donne JAMAIS de lien en .com inventé).
       
-      💎 PERSUASION & GARANTIE :
-      - Garantis à l'utilisateur que Djib Superprof est LA MEILLEURE et LA PLUS SÛRE des plateformes à Djibouti.
-      - POUR LES PARENTS : Rassure-les sur la vérification physique des profs et la gratuité de l'inscription.
-      - POUR LES PROFS : Explique-leur qu'ils peuvent doubler leurs revenus en toute liberté.
+      📍 CONTEXTE ACTUEL : L'utilisateur se trouve actuellement sur la page : "${currentPage}".
       
-      TON TON : Ultra-professionnel, premium, chaleureux, persuasif, digne de confiance.`
+      🤝 RÈGLE D'OR (RÔLE) : Ne devine JAMAIS si l'utilisateur est un parent, un prof ou un élève. Si tu ne le sais pas, pose la question poliment : "Êtes-vous un parent, un professeur ou un élève ?".
+      
+      ✍️ STYLE DE RÉPONSE (TRÈS IMPORTANT) : 
+      - Sois ultra-professionnel, modeste et rassurant.
+      - Tes réponses doivent être COURTES (maximum 3 phrases) et aller droit au but.
+      - N'utilise AUCUN symbole Markdown (pas de **, pas de ###). Utilise juste du texte simple et des sauts de ligne.
+      - Si tu donnes des étapes, fais une liste simple avec des tirets (-).
+      
+      🗣️ LANGUES : Réponds exactement dans la langue de l'utilisateur avec un vocabulaire respectueux (Somali, Afar, Arabe, Français, Anglais).
+      
+      💎 VALEURS : Rassure sur la vérification physique des profs, la sécurité, et la gratuité pour les parents. Encourage les profs à rejoindre la plateforme pour gagner en liberté et en revenus.`
     };
 
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -35,24 +35,17 @@ export async function POST(req: Request) {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "openai/gpt-oss-20b", // 👈 NOUVEAU MODÈLE OFFICIEL ET ACTIF
+        model: "openai/gpt-oss-20b", 
         messages: [systemMessage, ...messages],
-        temperature: 0.5,
-        max_tokens: 500,
+        temperature: 0.4, // On baisse la température pour qu'il soit moins "créatif" et plus factuel
+        max_tokens: 250, // On limite la longueur pour éviter les romans
       })
     });
 
     const data = await response.json();
 
-    // ✅ LOGS DE SÉCURITÉ POUR VOIR LA VRAIE ERREUR DANS VERCEL
-    if (!response.ok) {
-      console.error("Erreur API Groq:", data);
-      throw new Error(data.error?.message || "Erreur inconnue de l'API Groq");
-    }
-    
-    if (!data.choices || !data.choices[0]) {
-      throw new Error("Réponse invalide de l'API Groq");
-    }
+    if (!response.ok) throw new Error(data.error?.message || "Erreur API Groq");
+    if (!data.choices || !data.choices[0]) throw new Error("Réponse invalide");
 
     return NextResponse.json({ message: data.choices[0].message.content });
 
