@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+// 👇 AJOUT 1 : On importe le Coach IA
+import ChatBot from "./components/ChatBot";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,7 +28,6 @@ export const metadata: Metadata = {
   },
   
   metadataBase: new URL(baseUrl),
-  // 👇 LIGNE "manifest" SUPPRIMÉE ICI (Next.js le gère automatiquement)
   
   title: {
     default: "Djib Superprof | Professeurs vérifiés à Djibouti",
@@ -151,7 +152,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
         />
       </head>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+        {/* 👇 AJOUT 2 : Le Coach IA est maintenant affiché sur TOUTES les pages */}
+        <ChatBot />
+      </body>
     </html>
   );
 }
