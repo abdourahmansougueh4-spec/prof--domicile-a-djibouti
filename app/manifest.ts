@@ -7,7 +7,7 @@ export default function manifest(): MetadataRoute.Manifest {
     description: 'Trouvez un professeur vérifié à Djibouti pour du soutien scolaire, Coran, langues, informatique, arts et plus.',
     start_url: '/',
     display: 'standalone',
-    background_color: '#ffffff',
+    background_color: '#050B14',
     theme_color: '#2563eb',
     icons: [
       {
