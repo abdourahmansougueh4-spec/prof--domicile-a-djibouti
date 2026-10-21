@@ -541,7 +541,7 @@ export default function HomePage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-5 md:gap-8">
             {[
               { label: 'Professeurs vérifiés', valeur: stats.profs, emoji: '👨‍🏫', suffixe: '+' },
-              { label: 'Parents inscrits', valeur: stats.parents + 40, emoji: '👨‍👩‍👧', suffixe: '+' },
+              {  label: 'Parents inscrits', valeur: (stats.parents || 0) + 40, emoji: '👨‍👩‍👧', suffixe: '+' },
               { label: 'Élèves accompagnés', valeur: stats.eleves, emoji: '🎓', suffixe: '+' },
               { label: 'Note moyenne', valeur: (Math.round(stats.note_moyenne * 10) / 10) + 3.5, emoji: '⭐', suffixe: '/5' },
             ].map((s, i) => (
