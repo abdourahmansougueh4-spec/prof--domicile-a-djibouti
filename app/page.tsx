@@ -954,27 +954,12 @@ export default function HomePage() {
             </p>
             <div className="flex items-center gap-3 text-[10px] text-slate-500">
               <span className="flex items-center gap-1"><span>🔒</span><span>Paiements sécurisés</span></span>
-              <span className="flex items-center gap-1"><span>🇩🇯</span><span>100% Djibouti</span></span>
+              <span className="flex items-center gap-1"><span>🇩🇯</span><span>100% local a djibouti</span></span>
             </div>
           </div>
         </div>
       </footer>
 
-      {/* BOUTON WHATSAPP FLOTTANT */}
-      <motion.a
-        href="https://wa.me/25377741482"
-        target="_blank"
-        rel="noopener noreferrer"
-        initial={{ scale: 0, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 1.5, type: 'spring', stiffness: 300 }}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.95 }}
-        className="fixed bottom-5 right-5 z-40 w-14 h-14 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 shadow-2xl shadow-green-600/40 flex items-center justify-center text-2xl text-white"
-        title="Contacter sur WhatsApp"
-      >
-        💬
-      </motion.a>
     </div>
   )
 }
