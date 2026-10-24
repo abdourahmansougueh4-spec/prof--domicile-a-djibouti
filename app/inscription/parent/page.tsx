@@ -6,6 +6,10 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
+// ============================================================
+// TYPES
+// ============================================================
+
 type Enfant = {
   prenom: string
   niveaux: string[]
@@ -20,6 +24,30 @@ const fadeUp = {
   animate: { opacity: 1, y: 0 },
   exit: { opacity: 0, y: -20 },
 }
+
+// ============================================================
+// VALIDATION HELPERS
+// ============================================================
+
+const emailValide = (email: string): boolean => {
+  const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+  return regex.test(email) && email.length <= 254
+}
+
+const compterChiffres = (tel: string): number => tel.replace(/\D/g, '').length
+
+const formaterTelephone = (valeur: string): string => {
+  const chiffres = valeur.replace(/\D/g, '').slice(0, 8)
+  const groupes: string[] = []
+  for (let i = 0; i < chiffres.length; i += 2) {
+    groupes.push(chiffres.slice(i, i + 2))
+  }
+  return groupes.join(' ')
+}
+
+// ============================================================
+// COMPOSANT PRINCIPAL
+// ============================================================
 
 export default function InscriptionParent() {
   const router = useRouter()
@@ -50,10 +78,14 @@ export default function InscriptionParent() {
   ])
 
   const [preferences, setPreferences] = useState({
-    unSeulProf: false,
+    unSeulProf: true,
     unProfParMatiere: false,
     coursADomicile: true,
   })
+
+  // ============================================================
+  // HELPERS ENFANTS
+  // ============================================================
 
   const ajouterEnfant = () => {
     setEnfants([
@@ -87,7 +119,7 @@ export default function InscriptionParent() {
 
   const toggleItem = (
     index: number,
-    champ: 'niveaux' | 'classes' | 'languesComprises' | 'languesSpeciales' | 'precisionsLangues',
+    champ: 'classes' | 'languesComprises' | 'precisionsLangues',
     valeur: string
   ) => {
     const nouveaux = [...enfants]
@@ -132,6 +164,27 @@ export default function InscriptionParent() {
     setEnfants(nouveaux)
   }
 
+  const toggleLangueSpeciale = (index: number, langue: string) => {
+    const nouveaux = [...enfants]
+    const enfant = { ...nouveaux[index] }
+
+    if (enfant.languesSpeciales.includes(langue)) {
+      enfant.languesSpeciales = enfant.languesSpeciales.filter((l) => l !== langue)
+      enfant.precisionsLangues = enfant.precisionsLangues.filter(
+        (p) => !p.startsWith(langue)
+      )
+    } else {
+      enfant.languesSpeciales = [...enfant.languesSpeciales, langue]
+    }
+
+    nouveaux[index] = enfant
+    setEnfants(nouveaux)
+  }
+
+  // ============================================================
+  // DÉRIVÉS
+  // ============================================================
+
   const classesDisponibles = (niveauxChoisis: string[]) => {
     const classes: string[] = []
     if (niveauxChoisis.includes('primaire')) {
@@ -149,13 +202,11 @@ export default function InscriptionParent() {
   const matieresParNiveaux = (niveauxChoisis: string[]) => {
     const matieres: string[] = []
     if (niveauxChoisis.includes('primaire'))
-      matieres.push('Primaire : toutes matières (français + arabe)')
+      matieres.push('Toutes matières (français + arabe)')
     if (niveauxChoisis.includes('college'))
-      matieres.push('Collège : Maths, Physique, SVT, Français, Anglais, Arabe')
+      matieres.push('Maths, Physique, SVT, Français, Anglais, Arabe')
     if (niveauxChoisis.includes('lycee'))
-      matieres.push('Lycée : Maths (autres bientôt)')
-    if (niveauxChoisis.includes('langue_speciale'))
-      matieres.push('Langues / Coran : cours spéciaux')
+      matieres.push('Maths (autres matières bientôt)')
     return matieres
   }
 
@@ -173,8 +224,7 @@ export default function InscriptionParent() {
       precisions.push(
         { val: 'coran_lecture', label: 'Coran — Lecture', emoji: '📖' },
         { val: 'coran_tajwid', label: 'Coran — Tajwid', emoji: '🎵' },
-        { val: 'coran_memorisation', label: 'Coran — Mémorisation', emoji: '🧠' },
-        { val: 'coran_tafsir', label: 'Coran — Tafsir', emoji: '📜' }
+        { val: 'coran_memorisation', label: 'Coran — Mémorisation', emoji: '🧠' }
       )
     }
     if (langues.includes('francais')) {
@@ -196,45 +246,78 @@ export default function InscriptionParent() {
     return precisions
   }
 
-  const validerEtape1 = () => {
-    if (!parent.nomComplet || !parent.email || !parent.motDePasse) {
-      setErreur('Veuillez remplir tous les champs obligatoires')
+  // ============================================================
+  // VALIDATION ÉTAPES
+  // ============================================================
+
+  const validerEtape1 = (): boolean => {
+    if (!parent.nomComplet.trim()) {
+      setErreur('Veuillez saisir votre nom complet')
+      return false
+    }
+    if (parent.nomComplet.trim().length < 3) {
+      setErreur('Le nom doit contenir au moins 3 caractères')
+      return false
+    }
+    if (!parent.email.trim()) {
+      setErreur('Veuillez saisir votre adresse email')
+      return false
+    }
+    if (!emailValide(parent.email.trim())) {
+      setErreur('Le format de l\'adresse email est invalide (ex : nom@email.com)')
+      return false
+    }
+    if (!parent.motDePasse) {
+      setErreur('Veuillez choisir un mot de passe')
       return false
     }
     if (parent.motDePasse.length < 6) {
       setErreur('Le mot de passe doit contenir au moins 6 caractères')
       return false
     }
+    if (parent.telephone && compterChiffres(parent.telephone) < 8) {
+      setErreur('Le numéro de téléphone doit contenir 8 chiffres')
+      return false
+    }
+    if (parent.whatsapp && compterChiffres(parent.whatsapp) < 8) {
+      setErreur('Le numéro WhatsApp doit contenir 8 chiffres')
+      return false
+    }
     setErreur('')
     return true
   }
 
-  const validerEtape2 = () => {
+  const validerEtape2 = (): boolean => {
     for (let i = 0; i < enfants.length; i++) {
       const e = enfants[i]
+      const num = i + 1
+
       if (e.niveaux.length === 0) {
-        setErreur(`Veuillez cocher au moins un niveau pour l'enfant ${i + 1}`)
+        setErreur(`Enfant ${num} : cochez au moins un type de cours`)
         return false
       }
+
       const aNiveauxNormaux = e.niveaux.some((n) =>
         ['primaire', 'college', 'lycee'].includes(n)
       )
       if (aNiveauxNormaux && e.classes.length === 0) {
-        setErreur(`Veuillez cocher au moins une classe pour l'enfant ${i + 1}`)
+        setErreur(`Enfant ${num} : cochez au moins une classe`)
         return false
       }
+
       if (e.niveaux.includes('langue_speciale')) {
         if (e.languesSpeciales.length === 0) {
-          setErreur(`Veuillez cocher au moins une langue ou le Coran pour l'enfant ${i + 1}`)
+          setErreur(`Enfant ${num} : précisez quelle langue ou le Coran`)
           return false
         }
         if (e.precisionsLangues.length === 0) {
-          setErreur(`Veuillez préciser le type d'apprentissage pour l'enfant ${i + 1}`)
+          setErreur(`Enfant ${num} : précisez le type d'apprentissage`)
           return false
         }
       }
+
       if (e.languesComprises.length === 0) {
-        setErreur(`Veuillez cocher au moins une langue comprise par l'enfant ${i + 1}`)
+        setErreur(`Enfant ${num} : cochez au moins une langue comprise`)
         return false
       }
     }
@@ -246,109 +329,102 @@ export default function InscriptionParent() {
     if (etape === 1 && !validerEtape1()) return
     if (etape === 2 && !validerEtape2()) return
     setEtape(etape + 1)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const precedent = () => {
     setErreur('')
     setEtape(etape - 1)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
-const soumettre = async () => {
-  setLoading(true)
-  setErreur('')
 
-  try {
-    // 1. Créer l'utilisateur via l'API (service_role, pas de confirmation email)
-    const response = await fetch('/api/creer-utilisateur', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: parent.email,
-        password: parent.motDePasse,
-        nomComplet: parent.nomComplet,
-        role: 'parent',
-      }),
-    })
+  // ============================================================
+  // SOUMISSION
+  // ============================================================
 
-    const result = await response.json()
+  const soumettre = async () => {
+    setLoading(true)
+    setErreur('')
 
-    if (!response.ok || result.error) {
-      if (result.error?.includes('already')) {
-        setErreur('Cet email est déjà utilisé. Connectez-vous plutôt.')
-      } else {
-        setErreur(`Erreur : ${result.error || 'inconnue'}`)
-      }
-      setLoading(false)
-      return
-    }
-
-    const userId = result.userId
-
-    // 2. Se connecter (l'utilisateur est déjà confirmé)
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: parent.email,
-      password: parent.motDePasse,
-    })
-
-    if (signInError) {
-      console.error('Erreur signIn:', JSON.stringify(signInError, null, 2))
-    }
-
-    // 3. Mettre à jour le profil
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .update({
-        telephone: parent.telephone,
-        whatsapp: parent.whatsapp,
-        quartier: parent.quartier,
+    try {
+      const response = await fetch('/api/creer-utilisateur', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: parent.email.trim().toLowerCase(),
+          password: parent.motDePasse,
+          nomComplet: parent.nomComplet.trim(),
+          role: 'parent',
+        }),
       })
-      .eq('id', userId)
 
-    if (profileError) {
-      console.error('Erreur profil:', JSON.stringify(profileError, null, 2))
+      const result = await response.json()
+
+      if (!response.ok || result.error) {
+        const msg = (result.error || '').toLowerCase()
+        if (msg.includes('already') || msg.includes('existe')) {
+          setErreur('Cet email est déjà utilisé. Connectez-vous plutôt.')
+        } else {
+          setErreur('Impossible de créer votre compte. Réessayez.')
+        }
+        setLoading(false)
+        return
+      }
+
+      const userId = result.userId
+
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: parent.email.trim().toLowerCase(),
+        password: parent.motDePasse,
+      })
+      if (signInError) console.error('Erreur signIn:', JSON.stringify(signInError, null, 2))
+
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          telephone: parent.telephone ? `+253 ${parent.telephone.trim()}` : null,
+          whatsapp: parent.whatsapp ? `+253 ${parent.whatsapp.trim()}` : null,
+          quartier: parent.quartier.trim() || null,
+        })
+        .eq('id', userId)
+      if (profileError) console.error('Erreur profil:', JSON.stringify(profileError, null, 2))
+
+      const { error: parentError } = await supabase.from('parents').insert({
+        id: userId,
+        nombre_enfants: enfants.length,
+        preference_organisation: preferences.unSeulProf
+          ? 'un_seul_prof'
+          : 'un_prof_par_matiere',
+        cours_a_domicile: preferences.coursADomicile,
+      })
+      if (parentError) console.error('Erreur parent:', JSON.stringify(parentError, null, 2))
+
+      const enfantsData = enfants.map((e) => ({
+        parent_id: userId,
+        prenom: e.prenom.trim() || 'Enfant',
+        niveaux: e.niveaux,
+        classes: e.classes,
+        langues_comprises: e.languesComprises,
+        langues_speciales: e.languesSpeciales,
+        precisions_langues: e.precisionsLangues,
+      }))
+
+      const { error: enfantsError } = await supabase.from('enfants').insert(enfantsData)
+      if (enfantsError) console.error('Erreur enfants:', JSON.stringify(enfantsError, null, 2))
+
+      alert('🎉 Inscription réussie !\n\nBienvenue sur Prof À Domicile Djibouti. Votre espace parent est prêt.')
+      router.push('/espace-parent')
+    } catch (err) {
+      console.error('Erreur générale:', err)
+      setErreur('Une erreur est survenue. Veuillez réessayer.')
+    } finally {
+      setLoading(false)
     }
-
-    // 4. Créer l'entrée parent
-    const { error: parentError } = await supabase.from('parents').insert({
-      id: userId,
-      nombre_enfants: enfants.length,
-      preference_organisation: preferences.unSeulProf
-        ? 'un_seul_prof'
-        : 'un_prof_par_matiere',
-      cours_a_domicile: preferences.coursADomicile,
-    })
-
-    if (parentError) {
-      console.error('Erreur parent:', JSON.stringify(parentError, null, 2))
-    }
-
-    // 5. Créer les enfants
-    const enfantsData = enfants.map((e) => ({
-      parent_id: userId,
-      prenom: e.prenom || 'Enfant',
-      niveaux: e.niveaux,
-      classes: e.classes,
-      langues_comprises: e.languesComprises,
-      langues_speciales: e.languesSpeciales,
-      precisions_langues: e.precisionsLangues,
-    }))
-
-    const { error: enfantsError } = await supabase
-      .from('enfants')
-      .insert(enfantsData)
-
-    if (enfantsError) {
-      console.error('Erreur enfants:', JSON.stringify(enfantsError, null, 2))
-    }
-
-    alert('🎉 Inscription réussie !\n\nBienvenue sur Prof À Domicile Djibouti.')
-    router.push('/espace-parent')
-  } catch (err) {
-    console.error('Erreur générale:', err)
-    setErreur('Une erreur est survenue. Veuillez réessayer.')
-  } finally {
-    setLoading(false)
   }
-}
+
+  // ============================================================
+  // CONFIG ÉTAPES
+  // ============================================================
 
   const etapes = [
     { num: 1, titre: 'Vos informations', desc: 'Nom, email, contact' },
@@ -357,7 +433,8 @@ const soumettre = async () => {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-emerald-50 relative overflow-hidden">
+      {/* Décor animé */}
       <motion.div
         className="absolute top-[-100px] left-[-100px] w-[500px] h-[500px] bg-blue-300/30 rounded-full blur-3xl"
         animate={{ x: [0, 50, 0], y: [0, 30, 0] }}
@@ -369,6 +446,7 @@ const soumettre = async () => {
         transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
       />
 
+      {/* Nav */}
       <nav className="relative z-10 backdrop-blur-md bg-white/70 border-b border-white/40">
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
           <Link href="/" className="flex items-center gap-2">
@@ -388,7 +466,8 @@ const soumettre = async () => {
         </div>
       </nav>
 
-      <div className="relative z-10 max-w-6xl mx-auto px-6 py-12">
+      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-12">
+        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -396,25 +475,25 @@ const soumettre = async () => {
           className="text-center mb-12"
         >
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/60 backdrop-blur-sm rounded-full border border-white/80 shadow-sm mb-6">
-            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+            <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
             <span className="text-xs font-semibold text-slate-700 uppercase tracking-wide">
-              Inscription gratuite · 2 minutes
+              Inscription parent · Gratuite
             </span>
           </div>
           <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-4 tracking-tight">
-            Rejoignez la communauté
+            Trouvez le professeur idéal
             <br />
-            <span className="bg-gradient-to-r from-blue-700 via-indigo-600 to-emerald-600 bg-clip-text text-transparent">
-              éducative de Djibouti
+            <span className="bg-gradient-to-r from-blue-700 via-teal-600 to-emerald-600 bg-clip-text text-transparent">
+              pour vos enfants à Djibouti
             </span>
           </h1>
           <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-            Trouvez le professeur idéal pour vos enfants. Vérifié, adapté à
-            leurs langues, et disponible près de chez vous.
+            Rejoignez des centaines de familles qui ont trouvé un prof vérifié en moins de 48h.
           </p>
         </motion.div>
 
         <div className="grid lg:grid-cols-[280px_1fr] gap-8">
+          {/* Sidebar progression */}
           <motion.aside
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -452,13 +531,13 @@ const soumettre = async () => {
                       </motion.div>
                       {e.num < 3 && (
                         <div
-                          className={`w-0.5 h-12 my-1 transition-colors ${
+                          className={`w-0.5 h-10 my-1 transition-colors ${
                             etape > e.num ? 'bg-emerald-500' : 'bg-slate-200'
                           }`}
                         />
                       )}
                     </div>
-                    <div className="pt-2 pb-6">
+                    <div className="pt-2 pb-4">
                       <div
                         className={`font-bold text-sm transition-colors ${
                           etape >= e.num ? 'text-slate-900' : 'text-slate-400'
@@ -479,7 +558,11 @@ const soumettre = async () => {
                 </div>
                 <div className="flex items-center gap-2 text-xs text-slate-600">
                   <span className="text-base">✅</span>
-                  <span>Vérifié sous 24h</span>
+                  <span>Profs vérifiés</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-slate-600">
+                  <span className="text-base">⚡</span>
+                  <span>Réponse sous 48h</span>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-slate-600">
                   <span className="text-base">🇩🇯</span>
@@ -489,8 +572,10 @@ const soumettre = async () => {
             </div>
           </motion.aside>
 
-          <div className="lg:col-span-1">
-            <div className="lg:hidden mb-6 flex gap-2">
+          {/* Formulaire */}
+          <div>
+            {/* Barre mobile */}
+            <div className="lg:hidden mb-6 flex gap-1">
               {[1, 2, 3].map((n) => (
                 <div
                   key={n}
@@ -503,6 +588,7 @@ const soumettre = async () => {
               ))}
             </div>
 
+            {/* Erreur */}
             <AnimatePresence>
               {erreur && (
                 <motion.div
@@ -519,14 +605,24 @@ const soumettre = async () => {
 
             <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-white/80 shadow-2xl shadow-blue-900/10 overflow-hidden">
               <AnimatePresence mode="wait">
+                {/* ============================================================ */}
+                {/* ÉTAPE 1 */}
+                {/* ============================================================ */}
                 {etape === 1 && (
-                  <motion.div key="etape1" {...fadeUp} transition={{ duration: 0.4 }} className="p-8 md:p-10">
+                  <motion.div
+                    key="etape1"
+                    {...fadeUp}
+                    transition={{ duration: 0.4 }}
+                    className="p-8 md:p-10"
+                  >
                     <div className="mb-8">
                       <div className="text-xs font-bold text-blue-700 uppercase tracking-wider mb-2">
                         Étape 1 / 3
                       </div>
                       <h2 className="text-3xl font-black text-slate-900">Vos informations</h2>
-                      <p className="text-slate-500 mt-2">Ces informations resteront confidentielles.</p>
+                      <p className="text-slate-500 mt-2">
+                        Ces informations resteront strictement confidentielles.
+                      </p>
                     </div>
 
                     <div className="space-y-5">
@@ -538,12 +634,13 @@ const soumettre = async () => {
                         placeholder="Ex : Ahmed Hassan"
                       />
                       <Field
-                        label="Email"
+                        label="Adresse email"
                         required
                         type="email"
                         value={parent.email}
                         onChange={(v) => setParent({ ...parent, email: v })}
                         placeholder="exemple@email.com"
+                        hint="Nous vous enverrons un email de confirmation."
                       />
                       <Field
                         label="Mot de passe"
@@ -552,42 +649,65 @@ const soumettre = async () => {
                         value={parent.motDePasse}
                         onChange={(v) => setParent({ ...parent, motDePasse: v })}
                         placeholder="Au moins 6 caractères"
-                        hint="Utilisez un mélange de lettres et de chiffres"
+                        hint="Utilisez un mélange de lettres et de chiffres."
                       />
+
                       <div className="grid md:grid-cols-2 gap-5">
-                        <Field
+                        <TelephoneField
                           label="Téléphone"
-                          type="tel"
                           value={parent.telephone}
                           onChange={(v) => setParent({ ...parent, telephone: v })}
-                          placeholder="+253 ..."
                         />
-                        <Field
+                        <TelephoneField
                           label="WhatsApp"
-                          type="tel"
                           value={parent.whatsapp}
                           onChange={(v) => setParent({ ...parent, whatsapp: v })}
-                          placeholder="+253 ..."
                         />
                       </div>
+
                       <Field
                         label="Quartier à Djibouti"
                         value={parent.quartier}
                         onChange={(v) => setParent({ ...parent, quartier: v })}
                         placeholder="Ex : Héron, Balbala, Centre-ville..."
+                        hint="Facultatif, mais utile pour vous proposer des profs proches."
                       />
+
+                      <div className="bg-gradient-to-br from-blue-50 to-emerald-50 rounded-2xl p-5 border border-blue-200">
+                        <div className="flex items-start gap-3">
+                          <span className="text-xl">🛡️</span>
+                          <div>
+                            <div className="text-sm font-bold text-slate-800 mb-1">
+                              Vos données sont protégées
+                            </div>
+                            <p className="text-xs text-slate-600 leading-relaxed">
+                              Votre email et votre mot de passe sont chiffrés. Seuls les professeurs que vous contactez verront vos coordonnées.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </motion.div>
                 )}
 
+                {/* ============================================================ */}
+                {/* ÉTAPE 2 */}
+                {/* ============================================================ */}
                 {etape === 2 && (
-                  <motion.div key="etape2" {...fadeUp} transition={{ duration: 0.4 }} className="p-8 md:p-10">
+                  <motion.div
+                    key="etape2"
+                    {...fadeUp}
+                    transition={{ duration: 0.4 }}
+                    className="p-8 md:p-10"
+                  >
                     <div className="mb-8">
                       <div className="text-xs font-bold text-blue-700 uppercase tracking-wider mb-2">
                         Étape 2 / 3
                       </div>
                       <h2 className="text-3xl font-black text-slate-900">Vos enfants</h2>
-                      <p className="text-slate-500 mt-2">Ajoutez autant d'enfants que nécessaire.</p>
+                      <p className="text-slate-500 mt-2">
+                        Ajoutez autant d'enfants que nécessaire — c'est gratuit.
+                      </p>
                     </div>
 
                     <div className="space-y-6">
@@ -603,24 +723,36 @@ const soumettre = async () => {
                         return (
                           <motion.div
                             key={index}
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ duration: 0.3 }}
-                            className="bg-gradient-to-br from-slate-50 to-blue-50/50 rounded-2xl p-6 border border-slate-200/70"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="bg-slate-50/70 backdrop-blur-sm rounded-2xl p-5 sm:p-6 border border-slate-200"
                           >
+                            {/* Header enfant */}
                             <div className="flex justify-between items-center mb-5">
                               <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-700 to-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-md">
+                                <motion.div
+                                  animate={{ scale: [1, 1.05, 1] }}
+                                  transition={{ duration: 0.5 }}
+                                  className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-700 to-emerald-600 text-white flex items-center justify-center font-black text-sm shadow-lg"
+                                >
                                   {index + 1}
+                                </motion.div>
+                                <div>
+                                  <div className="font-bold text-slate-800 text-sm">
+                                    Enfant {index + 1}
+                                  </div>
+                                  <div className="text-xs text-slate-500">
+                                    {enfant.prenom || 'Prénom non renseigné'}
+                                  </div>
                                 </div>
-                                <span className="font-bold text-slate-800">Enfant {index + 1}</span>
                               </div>
                               {enfants.length > 1 && (
                                 <button
+                                  type="button"
                                   onClick={() => supprimerEnfant(index)}
-                                  className="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg text-sm transition-colors"
+                                  className="text-rose-500 hover:text-rose-700 hover:bg-rose-50 p-2 rounded-lg text-xs font-bold transition-colors"
                                 >
-                                  🗑️
+                                  ✕ Supprimer
                                 </button>
                               )}
                             </div>
@@ -633,60 +765,115 @@ const soumettre = async () => {
                                 placeholder="Ex : Fatima"
                               />
 
-                              <div className="bg-white/70 rounded-2xl p-5 border border-blue-100">
-                                <div className="flex items-start gap-3 mb-4">
-                                  <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                                    <span className="text-base">🎓</span>
+                              {/* Type de cours */}
+                              <div className="bg-white rounded-2xl p-5 border-2 border-blue-100">
+                                <div className="mb-4">
+                                  <div className="font-bold text-slate-900 text-sm">
+                                    🎯 Type de cours souhaité
                                   </div>
-                                  <div>
-                                    <div className="font-bold text-slate-900 text-sm">Niveaux de l'enfant</div>
-                                    <div className="text-xs text-slate-500">Cochez un ou plusieurs niveaux</div>
+                                  <div className="text-xs text-slate-500 mt-0.5">
+                                    Cochez un ou plusieurs types
                                   </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                  {[
-                                    { val: 'primaire', label: 'Primaire', emoji: '🎒', sousTitre: '1ère - 5ème' },
-                                    { val: 'college', label: 'Collège', emoji: '📖', sousTitre: '6ème - 9ème' },
-                                    { val: 'lycee', label: 'Lycée', emoji: '🎓', sousTitre: '2nde - Tle' },
-                                    { val: 'langue_speciale', label: 'Langue / Coran', emoji: '📕', sousTitre: 'Cours spécial' },
-                                  ].map((n) => {
-                                    const actif = enfant.niveaux.includes(n.val)
-                                    return (
-                                      <motion.button
-                                        key={n.val}
-                                        type="button"
-                                        whileHover={{ scale: actif ? 1.03 : 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
-                                        onClick={() => toggleNiveau(index, n.val)}
-                                        className={`relative py-4 rounded-2xl font-bold text-sm transition-all duration-200 ${
-                                          actif
-                                            ? 'bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-xl shadow-blue-600/40 border-4 border-blue-800 scale-105'
-                                            : 'bg-white text-slate-700 hover:bg-slate-50 border-2 border-slate-200 hover:border-blue-300'
-                                        }`}
+                                {/* Soutien scolaire */}
+                                <div className="mb-5">
+                                  <div className="text-[11px] font-bold text-blue-700 uppercase tracking-wide mb-2 flex items-center gap-1 flex-wrap">
+                                    🎒 Soutien scolaire
+                                    <span className="text-slate-400 normal-case font-medium">
+                                      (nécessite un niveau)
+                                    </span>
+                                  </div>
+                                  <div className="grid grid-cols-3 gap-2">
+                                    {[
+                                      { val: 'primaire', label: 'Primaire', emoji: '🎒', sousTitre: '1ère - 5ème' },
+                                      { val: 'college', label: 'Collège', emoji: '📖', sousTitre: '6ème - 9ème' },
+                                      { val: 'lycee', label: 'Lycée', emoji: '🎓', sousTitre: '2nde - Tle' },
+                                    ].map((n) => {
+                                      const actif = enfant.niveaux.includes(n.val)
+                                      return (
+                                        <motion.button
+                                          key={n.val}
+                                          type="button"
+                                          whileHover={{ scale: 1.03 }}
+                                          whileTap={{ scale: 0.97 }}
+                                          onClick={() => toggleNiveau(index, n.val)}
+                                          className={`relative py-3 rounded-xl font-bold text-sm transition-all ${
+                                            actif
+                                              ? 'bg-gradient-to-br from-blue-700 to-blue-600 text-white shadow-lg border-2 border-blue-800'
+                                              : 'bg-white text-slate-700 border-2 border-slate-200 hover:border-blue-300'
+                                          }`}
+                                        >
+                                          {actif && (
+                                            <motion.div
+                                              initial={{ scale: 0, rotate: -180 }}
+                                              animate={{ scale: 1, rotate: 0 }}
+                                              className="absolute -top-2 -right-2 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-md border-2 border-blue-700"
+                                            >
+                                              <svg className="w-2.5 h-2.5 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 13l4 4L19 7" />
+                                              </svg>
+                                            </motion.div>
+                                          )}
+                                          <div className="flex flex-col items-center gap-0.5">
+                                            <span className="text-xl">{n.emoji}</span>
+                                            <span>{n.label}</span>
+                                            <span className={`text-[10px] font-semibold ${actif ? 'text-blue-100' : 'text-slate-400'}`}>
+                                              {n.sousTitre}
+                                            </span>
+                                          </div>
+                                        </motion.button>
+                                      )
+                                    })}
+                                  </div>
+                                </div>
+
+                                {/* Coran / Langue */}
+                                <div>
+                                  <div className="text-[11px] font-bold text-emerald-700 uppercase tracking-wide mb-2 flex items-center gap-1 flex-wrap">
+                                    📕 Coran & Langue étrangère
+                                    <span className="text-emerald-600 normal-case font-bold">
+                                      (aucun niveau requis ✓)
+                                    </span>
+                                  </div>
+                                  <motion.button
+                                    type="button"
+                                    whileHover={{ scale: 1.01 }}
+                                    whileTap={{ scale: 0.99 }}
+                                    onClick={() => toggleNiveau(index, 'langue_speciale')}
+                                    className={`relative w-full py-4 px-4 rounded-xl font-bold text-sm transition-all ${
+                                      enfant.niveaux.includes('langue_speciale')
+                                        ? 'bg-gradient-to-br from-emerald-600 to-emerald-500 text-white shadow-lg border-2 border-emerald-700'
+                                        : 'bg-white text-slate-700 border-2 border-slate-200 hover:border-emerald-300'
+                                    }`}
+                                  >
+                                    {enfant.niveaux.includes('langue_speciale') && (
+                                      <motion.div
+                                        initial={{ scale: 0 }}
+                                        animate={{ scale: 1 }}
+                                        className="absolute -top-2 -right-2 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-md border-2 border-emerald-600"
                                       >
-                                        {actif && (
-                                          <motion.div
-                                            initial={{ scale: 0, rotate: -180 }}
-                                            animate={{ scale: 1, rotate: 0 }}
-                                            transition={{ type: 'spring', stiffness: 500, damping: 20 }}
-                                            className="absolute -top-2 -right-2 w-7 h-7 bg-white rounded-full flex items-center justify-center shadow-lg border-2 border-blue-600"
-                                          >
-                                            <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 13l4 4L19 7" />
-                                            </svg>
-                                          </motion.div>
-                                        )}
-                                        <div className="flex flex-col items-center gap-1">
-                                          <span className="text-2xl">{n.emoji}</span>
-                                          <span>{n.label}</span>
-                                          <span className={`text-[10px] font-semibold ${actif ? 'text-blue-100' : 'text-slate-400'}`}>
-                                            {n.sousTitre}
-                                          </span>
+                                        <svg className="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 13l4 4L19 7" />
+                                        </svg>
+                                      </motion.div>
+                                    )}
+                                    <div className="flex items-center justify-center gap-3">
+                                      <span className="text-2xl">📕</span>
+                                      <div className="text-left">
+                                        <div>Coran / Langue étrangère</div>
+                                        <div
+                                          className={`text-[10px] font-semibold ${
+                                            enfant.niveaux.includes('langue_speciale')
+                                              ? 'text-emerald-100'
+                                              : 'text-slate-400'
+                                          }`}
+                                        >
+                                          Cours spécial — aucun niveau scolaire
                                         </div>
-                                      </motion.button>
-                                    )
-                                  })}
+                                      </div>
+                                    </div>
+                                  </motion.button>
                                 </div>
 
                                 {matieres.length > 0 && (
@@ -695,94 +882,79 @@ const soumettre = async () => {
                                     animate={{ opacity: 1, y: 0 }}
                                     className="mt-4 p-3 bg-blue-50 rounded-xl border border-blue-100"
                                   >
-                                    <p className="text-xs font-bold text-blue-900 mb-1">📚 Matières disponibles :</p>
+                                    <p className="text-xs font-bold text-blue-900 mb-1">
+                                      📚 Matières disponibles
+                                    </p>
                                     {matieres.map((m, i) => (
-                                      <p key={i} className="text-xs text-blue-800">• {m}</p>
+                                      <p key={i} className="text-xs text-blue-800">
+                                        • {m}
+                                      </p>
                                     ))}
                                   </motion.div>
                                 )}
                               </div>
 
+                              {/* Classes */}
                               <AnimatePresence>
-                                {aNiveauxNormaux && (
+                                {aNiveauxNormaux && classesDispo.length > 0 && (
                                   <motion.div
                                     initial={{ opacity: 0, height: 0 }}
                                     animate={{ opacity: 1, height: 'auto' }}
                                     exit={{ opacity: 0, height: 0 }}
-                                    className="bg-white/70 rounded-2xl p-5 border border-indigo-100"
+                                    className="overflow-hidden bg-white rounded-2xl p-5 border-2 border-indigo-100"
                                   >
-                                    <div className="flex items-start gap-3 mb-4">
-                                      <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                                        <span className="text-base">📚</span>
+                                    <div className="mb-4">
+                                      <div className="font-bold text-slate-900 text-sm">
+                                        🏫 Classes précises
                                       </div>
-                                      <div>
-                                        <div className="font-bold text-slate-900 text-sm">Classes précises</div>
-                                        <div className="text-xs text-slate-500">Cochez une ou plusieurs classes</div>
+                                      <div className="text-xs text-slate-500 mt-0.5">
+                                        Cochez une ou plusieurs classes
                                       </div>
                                     </div>
-
-                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                                       {classesDispo.map((c) => {
                                         const actif = enfant.classes.includes(c)
                                         return (
                                           <motion.button
                                             key={c}
                                             type="button"
-                                            whileHover={{ scale: actif ? 1.03 : 1.05 }}
-                                            whileTap={{ scale: 0.95 }}
+                                            whileHover={{ scale: 1.02 }}
+                                            whileTap={{ scale: 0.98 }}
                                             onClick={() => toggleItem(index, 'classes', c)}
-                                            className={`relative py-3 rounded-xl font-bold text-sm transition-all duration-200 ${
+                                            className={`py-2.5 rounded-xl font-bold text-sm transition-all ${
                                               actif
-                                                ? 'bg-gradient-to-br from-indigo-600 to-indigo-500 text-white shadow-lg shadow-indigo-600/40 border-4 border-indigo-800 scale-105'
-                                                : 'bg-white text-slate-700 hover:bg-slate-50 border-2 border-slate-200 hover:border-indigo-300'
+                                                ? 'bg-gradient-to-br from-indigo-700 to-indigo-600 text-white shadow-md'
+                                                : 'bg-white text-slate-700 border-2 border-slate-200 hover:border-indigo-300'
                                             }`}
                                           >
-                                            {actif && (
-                                              <motion.div
-                                                initial={{ scale: 0, rotate: -180 }}
-                                                animate={{ scale: 1, rotate: 0 }}
-                                                transition={{ type: 'spring', stiffness: 500, damping: 20 }}
-                                                className="absolute -top-2 -right-2 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-lg border-2 border-indigo-600"
-                                              >
-                                                <svg className="w-3 h-3 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 13l4 4L19 7" />
-                                                </svg>
-                                              </motion.div>
-                                            )}
                                             {c}
                                           </motion.button>
                                         )
                                       })}
                                     </div>
-
-                                    {enfant.classes.length > 0 && (
-                                      <p className="text-xs text-indigo-700 font-bold mt-3">
-                                        ✓ {enfant.classes.length} {enfant.classes.length === 1 ? 'classe sélectionnée' : 'classes sélectionnées'}
-                                      </p>
-                                    )}
                                   </motion.div>
                                 )}
                               </AnimatePresence>
 
+                              {/* Langues / Coran spécifiques */}
                               <AnimatePresence>
                                 {aLangueSpeciale && (
                                   <motion.div
                                     initial={{ opacity: 0, height: 0 }}
                                     animate={{ opacity: 1, height: 'auto' }}
                                     exit={{ opacity: 0, height: 0 }}
-                                    className="bg-white/70 rounded-2xl p-5 border border-purple-100"
+                                    className="overflow-hidden bg-white rounded-2xl p-5 border-2 border-purple-100"
                                   >
-                                    <div className="flex items-start gap-3 mb-4">
-                                      <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
-                                        <span className="text-base">📕</span>
+                                    <div className="mb-4">
+                                      <div className="font-bold text-slate-900 text-sm">
+                                        📕 Quelle langue ou le Coran ?
                                       </div>
-                                      <div>
-                                        <div className="font-bold text-slate-900 text-sm">Quelle langue ou le Coran ?</div>
-                                        <div className="text-xs text-slate-500">Cochez une ou plusieurs options</div>
+                                      <div className="text-xs text-slate-500 mt-0.5">
+                                        Cochez une ou plusieurs options
                                       </div>
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-3 mb-5">
+                                    <div className="grid grid-cols-2 gap-2 mb-4">
                                       {[
                                         { val: 'arabe', label: 'Arabe' },
                                         { val: 'coran', label: 'Coran' },
@@ -794,38 +966,15 @@ const soumettre = async () => {
                                           <motion.button
                                             key={l.val}
                                             type="button"
-                                            whileHover={{ scale: actif ? 1.03 : 1.05 }}
-                                            whileTap={{ scale: 0.95 }}
-                                            onClick={() => {
-                                              const nouveaux = [...enfants]
-                                              const enf = { ...nouveaux[index] }
-                                              if (enf.languesSpeciales.includes(l.val)) {
-                                                enf.languesSpeciales = enf.languesSpeciales.filter((v) => v !== l.val)
-                                                enf.precisionsLangues = enf.precisionsLangues.filter((p) => !p.startsWith(l.val))
-                                              } else {
-                                                enf.languesSpeciales = [...enf.languesSpeciales, l.val]
-                                              }
-                                              nouveaux[index] = enf
-                                              setEnfants(nouveaux)
-                                            }}
-                                            className={`relative py-4 rounded-2xl font-bold text-sm transition-all duration-200 ${
+                                            whileHover={{ scale: 1.02 }}
+                                            whileTap={{ scale: 0.98 }}
+                                            onClick={() => toggleLangueSpeciale(index, l.val)}
+                                            className={`py-3 rounded-xl font-bold text-sm transition-all ${
                                               actif
-                                                ? 'bg-gradient-to-br from-purple-600 to-purple-500 text-white shadow-xl shadow-purple-600/40 border-4 border-purple-800 scale-105'
-                                                : 'bg-white text-slate-700 hover:bg-slate-50 border-2 border-slate-200 hover:border-purple-300'
+                                                ? 'bg-gradient-to-br from-purple-700 to-purple-600 text-white shadow-md'
+                                                : 'bg-white text-slate-700 border-2 border-slate-200 hover:border-purple-300'
                                             }`}
                                           >
-                                            {actif && (
-                                              <motion.div
-                                                initial={{ scale: 0, rotate: -180 }}
-                                                animate={{ scale: 1, rotate: 0 }}
-                                                transition={{ type: 'spring', stiffness: 500, damping: 20 }}
-                                                className="absolute -top-2 -right-2 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-lg border-2 border-purple-600"
-                                              >
-                                                <svg className="w-3 h-3 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 13l4 4L19 7" />
-                                                </svg>
-                                              </motion.div>
-                                            )}
                                             {l.label}
                                           </motion.button>
                                         )
@@ -834,12 +983,12 @@ const soumettre = async () => {
 
                                     {precisions.length > 0 && (
                                       <motion.div
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
+                                        initial={{ opacity: 0, y: -5 }}
+                                        animate={{ opacity: 1, y: 0 }}
                                         className="pt-4 border-t border-purple-100"
                                       >
                                         <div className="text-xs font-bold text-purple-700 mb-3">
-                                          🎯 Précisez le type d'apprentissage :
+                                          🎯 Précisez le type d'apprentissage
                                         </div>
                                         <div className="grid grid-cols-2 gap-2">
                                           {precisions.map((p) => {
@@ -848,13 +997,15 @@ const soumettre = async () => {
                                               <motion.button
                                                 key={p.val}
                                                 type="button"
-                                                whileHover={{ scale: actif ? 1.02 : 1.03 }}
-                                                whileTap={{ scale: 0.97 }}
-                                                onClick={() => toggleItem(index, 'precisionsLangues', p.val)}
-                                                className={`p-3 rounded-xl font-bold text-xs border-2 transition-all flex items-center gap-2 ${
+                                                whileHover={{ scale: 1.02 }}
+                                                whileTap={{ scale: 0.98 }}
+                                                onClick={() =>
+                                                  toggleItem(index, 'precisionsLangues', p.val)
+                                                }
+                                                className={`p-3 rounded-xl font-bold text-xs transition-all flex items-center gap-2 ${
                                                   actif
-                                                    ? 'border-purple-600 bg-purple-600 text-white shadow-lg shadow-purple-600/30'
-                                                    : 'border-slate-200 bg-white text-slate-700 hover:border-purple-300'
+                                                    ? 'bg-purple-600 text-white shadow-md'
+                                                    : 'bg-white text-slate-700 border-2 border-slate-200 hover:border-purple-300'
                                                 }`}
                                               >
                                                 <span>{p.emoji}</span>
@@ -869,28 +1020,18 @@ const soumettre = async () => {
                                 )}
                               </AnimatePresence>
 
-                              <div className="bg-white/70 rounded-2xl p-5 border border-emerald-100">
-                                <div className="flex items-start gap-3 mb-4">
-                                  <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                                    <span className="text-base">💬</span>
+                              {/* Langues comprises */}
+                              <div className="bg-white rounded-2xl p-5 border-2 border-emerald-100">
+                                <div className="mb-4">
+                                  <div className="font-bold text-slate-900 text-sm">
+                                    💬 Langues comprises par l'enfant
                                   </div>
-                                  <div>
-                                    <div className="font-bold text-slate-900 text-sm">
-                                      Langues comprises par l'enfant
-                                    </div>
-                                    <div className="text-xs text-slate-500 mt-1 leading-relaxed">
-                                      Le professeur communiquera dans la <strong>langue d'étude</strong>. Mais il est important de connaître les langues que votre enfant <strong>comprend bien</strong>, pour que la communication ne se coupe pas.
-                                    </div>
+                                  <div className="text-xs text-slate-500 mt-1 leading-relaxed">
+                                    Cochez les langues que votre enfant comprend bien. Cela nous aide à proposer les meilleurs profs.
                                   </div>
                                 </div>
 
-                                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 mb-4">
-                                  <p className="text-xs font-semibold text-emerald-800">
-                                    ✅ Cochez toutes les langues que votre enfant comprend et parle
-                                  </p>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-3">
+                                <div className="grid grid-cols-2 gap-2">
                                   {[
                                     { val: 'francais', label: 'Français' },
                                     { val: 'arabe', label: 'Arabe' },
@@ -902,42 +1043,22 @@ const soumettre = async () => {
                                       <motion.button
                                         key={l.val}
                                         type="button"
-                                        whileHover={{ scale: actif ? 1.03 : 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
-                                        onClick={() => toggleItem(index, 'languesComprises', l.val)}
-                                        className={`relative py-4 rounded-2xl font-bold text-sm flex items-center justify-center transition-all duration-200 ${
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.98 }}
+                                        onClick={() =>
+                                          toggleItem(index, 'languesComprises', l.val)
+                                        }
+                                        className={`py-3 rounded-xl font-bold text-sm transition-all ${
                                           actif
-                                            ? 'bg-gradient-to-br from-emerald-600 to-emerald-500 text-white shadow-xl shadow-emerald-600/40 border-4 border-emerald-800 scale-105'
-                                            : 'bg-white text-slate-700 hover:bg-slate-50 border-2 border-slate-200 hover:border-emerald-300'
+                                            ? 'bg-gradient-to-br from-emerald-600 to-emerald-500 text-white shadow-md'
+                                            : 'bg-white text-slate-700 border-2 border-slate-200 hover:border-emerald-300'
                                         }`}
                                       >
-                                        {actif && (
-                                          <motion.div
-                                            initial={{ scale: 0, rotate: -180 }}
-                                            animate={{ scale: 1, rotate: 0 }}
-                                            transition={{ type: 'spring', stiffness: 500, damping: 20 }}
-                                            className="absolute -top-2 -right-2 w-7 h-7 bg-white rounded-full flex items-center justify-center shadow-lg border-2 border-emerald-600"
-                                          >
-                                            <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 13l4 4L19 7" />
-                                            </svg>
-                                          </motion.div>
-                                        )}
                                         {l.label}
                                       </motion.button>
                                     )
                                   })}
                                 </div>
-
-                                {enfant.languesComprises.length > 0 && (
-                                  <motion.p
-                                    initial={{ opacity: 0, y: -5 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className="text-xs text-emerald-700 font-bold mt-3"
-                                  >
-                                    ✓ {enfant.languesComprises.length} {enfant.languesComprises.length === 1 ? 'langue sélectionnée' : 'langues sélectionnées'}
-                                  </motion.p>
-                                )}
                               </div>
                             </div>
                           </motion.div>
@@ -945,29 +1066,46 @@ const soumettre = async () => {
                       })}
 
                       <motion.button
+                        type="button"
                         whileHover={{ scale: 1.01 }}
                         whileTap={{ scale: 0.99 }}
                         onClick={ajouterEnfant}
-                        className="w-full py-5 border-2 border-dashed border-blue-300 rounded-2xl text-blue-700 font-bold hover:bg-blue-50 hover:border-blue-500 transition-all flex items-center justify-center gap-2"
+                        className="w-full py-4 border-2 border-dashed border-slate-300 rounded-2xl text-slate-600 font-bold hover:bg-white hover:border-blue-400 hover:text-blue-700 transition-all flex items-center justify-center gap-2"
                       >
-                        <span className="text-xl">➕</span>
+                        <span className="text-xl">+</span>
                         Ajouter un autre enfant
                       </motion.button>
+
+                      <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-xl">
+                        <p className="text-xs text-blue-800">
+                          💡 <strong>Astuce :</strong> Plus vous précisez les besoins de vos enfants, plus nous pourrons vous proposer les professeurs les mieux adaptés.
+                        </p>
+                      </div>
                     </div>
                   </motion.div>
                 )}
 
+                {/* ============================================================ */}
+                {/* ÉTAPE 3 */}
+                {/* ============================================================ */}
                 {etape === 3 && (
-                  <motion.div key="etape3" {...fadeUp} transition={{ duration: 0.4 }} className="p-8 md:p-10">
+                  <motion.div
+                    key="etape3"
+                    {...fadeUp}
+                    transition={{ duration: 0.4 }}
+                    className="p-8 md:p-10"
+                  >
                     <div className="mb-8">
                       <div className="text-xs font-bold text-blue-700 uppercase tracking-wider mb-2">
                         Étape 3 / 3
                       </div>
                       <h2 className="text-3xl font-black text-slate-900">Vos préférences</h2>
-                      <p className="text-slate-500 mt-2">Comment souhaitez-vous organiser les cours ?</p>
+                      <p className="text-slate-500 mt-2">
+                        Comment souhaitez-vous organiser les cours ?
+                      </p>
                     </div>
 
-                    <div className="space-y-5">
+                    <div className="space-y-4">
                       {[
                         {
                           id: 'unSeulProf',
@@ -979,32 +1117,20 @@ const soumettre = async () => {
                           id: 'unProfParMatiere',
                           titre: 'Un professeur par matière',
                           desc: 'Idéal pour avoir des spécialistes par matière',
-                          emoji: '📚',
+                          emoji: '🎯',
                         },
                       ].map((opt) => {
-                        const actif = preferences[opt.id as keyof typeof preferences] as boolean
+                        const actif = preferences[opt.id as 'unSeulProf' | 'unProfParMatiere']
                         return (
                           <motion.label
                             key={opt.id}
-                            whileHover={{ scale: 1.01 }}
-                            className={`relative flex items-start gap-4 p-5 rounded-2xl border-2 cursor-pointer transition-all ${
+                            whileHover={{ scale: actif ? 1.01 : 1.02 }}
+                            className={`flex items-start gap-4 p-5 rounded-2xl border-2 cursor-pointer transition-all ${
                               actif
-                                ? 'border-blue-600 bg-blue-50/70 shadow-lg shadow-blue-600/10'
+                                ? 'border-blue-700 bg-blue-50 shadow-lg'
                                 : 'border-slate-200 bg-white hover:border-blue-300'
                             }`}
                           >
-                            {actif && (
-                              <motion.div
-                                initial={{ scale: 0, rotate: -180 }}
-                                animate={{ scale: 1, rotate: 0 }}
-                                transition={{ type: 'spring', stiffness: 500, damping: 20 }}
-                                className="absolute -top-2 -right-2 w-7 h-7 bg-white rounded-full flex items-center justify-center shadow-lg border-2 border-blue-600"
-                              >
-                                <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 13l4 4L19 7" />
-                                </svg>
-                              </motion.div>
-                            )}
                             <input
                               type="radio"
                               name="organisation"
@@ -1018,18 +1144,29 @@ const soumettre = async () => {
                               }
                               className="mt-1 w-5 h-5 accent-blue-700"
                             />
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="text-xl">{opt.emoji}</span>
-                                <span className="font-bold text-slate-900">{opt.titre}</span>
+                            <div className="flex-1 flex items-start gap-3">
+                              <span className="text-2xl">{opt.emoji}</span>
+                              <div>
+                                <div className="font-bold text-slate-900 text-sm">
+                                  {opt.titre}
+                                </div>
+                                <div className="text-xs text-slate-500 mt-1">
+                                  {opt.desc}
+                                </div>
                               </div>
-                              <div className="text-sm text-slate-500">{opt.desc}</div>
                             </div>
                           </motion.label>
                         )
                       })}
 
-                      <label className="flex items-center gap-3 cursor-pointer p-4 rounded-2xl hover:bg-slate-50 border border-slate-200 transition-colors">
+                      <motion.label
+                        whileHover={{ scale: 1.01 }}
+                        className={`flex items-center gap-3 cursor-pointer p-4 rounded-2xl border-2 transition-all ${
+                          preferences.coursADomicile
+                            ? 'border-emerald-600 bg-emerald-50'
+                            : 'border-slate-200 bg-white hover:border-emerald-300'
+                        }`}
+                      >
                         <input
                           type="checkbox"
                           checked={preferences.coursADomicile}
@@ -1039,34 +1176,47 @@ const soumettre = async () => {
                               coursADomicile: e.target.checked,
                             })
                           }
-                          className="w-5 h-5 accent-blue-700"
+                          className="w-5 h-5 accent-emerald-700"
                         />
-                        <span className="text-sm font-medium text-slate-700">
-                          🏠 Je préfère les cours à mon domicile
-                        </span>
-                      </label>
+                        <div className="flex-1 flex items-center gap-2">
+                          <span className="text-xl">🏠</span>
+                          <span className="text-sm font-bold text-slate-800">
+                            Je préfère les cours à mon domicile
+                          </span>
+                        </div>
+                      </motion.label>
 
-                      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-5 rounded-2xl border border-blue-100">
+                      <div className="bg-gradient-to-br from-emerald-50 to-blue-50 p-5 rounded-2xl border border-emerald-100">
                         <div className="flex gap-3">
-                          <span className="text-xl">ℹ️</span>
+                          <span className="text-xl">✅</span>
                           <div>
-                            <p className="text-sm font-semibold text-blue-900 mb-1">Bon à savoir</p>
-                            <p className="text-sm text-blue-800">
-                              Vous pourrez discuter des horaires précis et des prix directement avec le professeur après votre première rencontre.
+                            <p className="text-sm font-semibold text-emerald-900 mb-1">
+                              Prêt à trouver votre professeur !
+                            </p>
+                            <p className="text-sm text-emerald-800 leading-relaxed">
+                              Après validation, vous pourrez parcourir les profils vérifiés, contacter les professeurs et organiser une première rencontre.
                             </p>
                           </div>
                         </div>
+                      </div>
+
+                      <div className="bg-blue-50/50 rounded-2xl p-4 border border-blue-200">
+                        <p className="text-xs text-blue-800 leading-relaxed">
+                          💡 <strong>Bon à savoir :</strong> Vous pourrez discuter des horaires précis et des prix directement avec le professeur après votre première rencontre.
+                        </p>
                       </div>
                     </div>
                   </motion.div>
                 )}
               </AnimatePresence>
 
+              {/* Navigation */}
               <div className="border-t border-slate-200/70 bg-white/60 backdrop-blur-sm p-6 md:p-8 flex gap-4">
                 {etape > 1 && (
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
+                    type="button"
                     onClick={precedent}
                     disabled={loading}
                     className="px-6 py-4 rounded-2xl font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors disabled:opacity-50"
@@ -1078,8 +1228,9 @@ const soumettre = async () => {
                   <motion.button
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
+                    type="button"
                     onClick={suivant}
-                    className="flex-1 py-4 rounded-2xl font-bold text-white bg-gradient-to-r from-blue-700 to-indigo-600 shadow-lg shadow-blue-600/30 hover:shadow-xl transition-all"
+                    className="flex-1 py-4 rounded-2xl font-bold text-white bg-gradient-to-r from-blue-700 to-emerald-600 shadow-lg shadow-blue-700/30 hover:shadow-xl transition-all"
                   >
                     Continuer →
                   </motion.button>
@@ -1087,6 +1238,7 @@ const soumettre = async () => {
                   <motion.button
                     whileHover={{ scale: loading ? 1 : 1.01 }}
                     whileTap={{ scale: loading ? 1 : 0.99 }}
+                    type="button"
                     onClick={soumettre}
                     disabled={loading}
                     className="flex-1 py-4 rounded-2xl font-bold text-white bg-gradient-to-r from-emerald-600 to-emerald-500 shadow-lg shadow-emerald-600/30 hover:shadow-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
@@ -1101,7 +1253,7 @@ const soumettre = async () => {
                         Création du compte...
                       </>
                     ) : (
-                      '✓ Créer mon compte'
+                      '✓ Créer mon compte parent'
                     )}
                   </motion.button>
                 )}
@@ -1124,6 +1276,10 @@ const soumettre = async () => {
     </div>
   )
 }
+
+// ============================================================
+// COMPOSANT FIELD
+// ============================================================
 
 function Field({
   label,
@@ -1155,6 +1311,49 @@ function Field({
         className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none font-medium text-slate-800 transition-all placeholder:text-slate-400"
       />
       {hint && <p className="text-xs text-slate-500 mt-1.5">{hint}</p>}
+    </div>
+  )
+}
+
+// ============================================================
+// COMPOSANT TELEPHONE FIELD (avec +253 fixe et formatage)
+// ============================================================
+
+function TelephoneField({
+  label,
+  value,
+  onChange,
+  required = false,
+}: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  required?: boolean
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-bold text-slate-700 mb-2">
+        {label} {required && <span className="text-red-500">*</span>}
+      </label>
+      <div className="flex items-center bg-white border border-slate-200 rounded-xl focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent transition-all overflow-hidden">
+        <div className="px-4 py-3.5 bg-slate-100 border-r border-slate-200 font-bold text-slate-700 flex items-center gap-2 flex-shrink-0">
+          <span>🇩🇯</span>
+          <span>+253</span>
+        </div>
+        <input
+          type="tel"
+          inputMode="numeric"
+          pattern="[0-9 ]*"
+          value={value}
+          onChange={(e) => onChange(formaterTelephone(e.target.value))}
+          placeholder="77 74 14 82"
+          maxLength={11}
+          className="flex-1 px-4 py-3.5 bg-transparent outline-none font-medium text-slate-800 placeholder:text-slate-400"
+        />
+      </div>
+      <p className="text-xs text-slate-500 mt-1.5">
+        Entrez 8 chiffres (uniquement des chiffres)
+      </p>
     </div>
   )
 }

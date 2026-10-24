@@ -365,7 +365,7 @@ export default function HomePage() {
                     🔐 Connexion
                   </Link>
                   <Link href="/inscription" onClick={() => setMenuMobile(false)} className="block w-full text-center py-3 rounded-xl font-bold text-white bg-gradient-to-r from-blue-700 to-indigo-600 shadow-lg">
-                    ✨ S'inscrire gratuitement
+                    ✨ S'inscrire gratuit parent 
                   </Link>
                 </div>
               </nav>
