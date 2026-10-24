@@ -1,30 +1,27 @@
 'use client'
 
 import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, Variants } from 'framer-motion'
 import Link from 'next/link'
 
 // ==========================================
-// ANIMATIONS HYPER-PREMIUM
+// ANIMATIONS (FIX TYPESCRIPT)
 // ==========================================
-const fadeInUp = {
+const fadeInUp: Variants = {
   hidden: { opacity: 0, y: 50 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } }
+  visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] as const } }
 }
 
-const staggerContainer = {
+const staggerContainer: Variants = {
   hidden: { opacity: 0 },
   visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
 }
 
-const scaleIn = {
+const scaleIn: Variants = {
   hidden: { opacity: 0, scale: 0.95 },
   visible: { opacity: 1, scale: 1, transition: { duration: 0.5, ease: "easeOut" } }
 }
 
-// ==========================================
-// DATA
-// ==========================================
 const faqs = [
   {
     q: "Est-ce que je paie vraiment 30% chaque mois ?",
@@ -54,21 +51,16 @@ export default function CharteQualiteProf() {
   return (
     <div className="min-h-screen bg-[#fafafa] relative overflow-hidden font-sans selection:bg-emerald-900 selection:text-white">
       
-      {/* DÉCOR DE FOND PREMIUM (Emeraude/Cyan pour la réussite) */}
       <div className="absolute top-0 left-0 w-full h-[800px] bg-gradient-to-b from-emerald-50/60 to-transparent -z-10" />
       <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-emerald-100/30 rounded-full blur-[150px] -z-10 translate-x-1/3 -translate-y-1/3" />
       <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-cyan-50/50 rounded-full blur-[120px] -z-10 -translate-x-1/2" />
 
-      {/* NAVIGATION RETOUR */}
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-7xl mx-auto px-6 pt-8 relative z-50">
         <Link href="/inscription" className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-emerald-700 transition-colors bg-white/80 backdrop-blur-md px-5 py-2.5 rounded-full border border-slate-200 shadow-sm hover:shadow-md">
           <span>←</span> Retour à l'inscription
         </Link>
       </motion.div>
 
-      {/* ==========================================
-          SECTION 1 : HERO (AUTORITÉ & PRESTIGE)
-      ========================================== */}
       <section className="relative pt-24 pb-32 md:pt-32 md:pb-40 overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 relative z-10 text-center">
           <motion.div initial="hidden" animate="visible" variants={staggerContainer}>
@@ -100,68 +92,46 @@ export default function CharteQualiteProf() {
         </div>
       </section>
 
-      {/* ==========================================
-          SECTION 2 : MODÈLE ÉCONOMIQUE (HONNÊTETÉ FINANCIÈRE)
-      ========================================== */}
       <section id="modele" className="py-24 bg-white border-y border-slate-100 relative">
         <div className="max-w-7xl mx-auto px-6">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeInUp} className="text-center mb-20">
             <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-6 tracking-tight">Votre Rémunération.</h2>
-            <p className="text-lg text-slate-600 max-w-3xl mx-auto font-medium leading-relaxed">
-              Nous détestons les plateformes qui prennent une commission à vie. Voici notre modèle : un investissement unique pour rejoindre l'élite, puis 100% pour vous.
-            </p>
+            <p className="text-lg text-slate-600 max-w-3xl mx-auto font-medium leading-relaxed">Nous détestons les plateformes qui prennent une commission à vie. Voici notre modèle : un investissement unique pour rejoindre l'élite, puis 100% pour vous.</p>
           </motion.div>
 
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-stretch max-w-5xl mx-auto">
-            
-            {/* FORMULE INTÉGRATION */}
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeInUp} className="relative group flex">
               <div className="relative w-full bg-slate-50 rounded-[2.5rem] p-8 md:p-12 border border-slate-200 shadow-sm group-hover:shadow-xl transition-all duration-300 flex flex-col justify-center items-center text-center">
                 <div className="w-20 h-20 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-4xl shadow-inner mb-6">🤝</div>
                 <h3 className="text-2xl font-black text-slate-900 mb-2">Frais d'Intégration</h3>
                 <p className="text-xs font-black text-blue-600 uppercase tracking-wider mb-6">Une seule fois</p>
-                
                 <div className="flex items-baseline gap-2 mb-6">
                   <span className="text-6xl font-black text-slate-900">30%</span>
                   <span className="text-sm font-bold text-slate-500">du 1er salaire</span>
                 </div>
-                
-                <p className="text-sm text-slate-600 font-medium leading-relaxed">
-                  Ce montant couvre la vérification de vos documents, vos tests pratiques, la création de votre profil, la publicité pour vous trouver des élèves et la garantie de paiement.
-                </p>
+                <p className="text-sm text-slate-600 font-medium leading-relaxed">Ce montant couvre la vérification de vos documents, vos tests pratiques, la création de votre profil, la publicité pour vous trouver des élèves et la garantie de paiement.</p>
               </div>
             </motion.div>
 
-            {/* FORMULE LIBERTÉ */}
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeInUp} className="relative group flex">
               <div className="absolute -inset-2 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-[3rem] blur-2xl opacity-20 group-hover:opacity-40 transition duration-500" />
               <div className="relative w-full bg-slate-950 rounded-[2.5rem] p-8 md:p-12 border border-slate-800 shadow-2xl flex flex-col justify-center items-center text-center overflow-hidden">
                 <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl" />
-                <div className="absolute top-6 right-6 px-4 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-[10px] font-black uppercase tracking-widest rounded-full shadow-lg">
-                  Votre Carrière
-                </div>
-                
+                <div className="absolute top-6 right-6 px-4 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-[10px] font-black uppercase tracking-widest rounded-full shadow-lg">Votre Carrière</div>
                 <div className="relative z-10 w-20 h-20 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center text-4xl shadow-inner border border-emerald-500/30 mb-6">💎</div>
                 <h3 className="relative z-10 text-2xl font-black text-white mb-2">Revenus Mensuels</h3>
                 <p className="relative z-10 text-xs font-black text-emerald-400 uppercase tracking-wider mb-6">À partir du 2ème mois</p>
-                
                 <div className="relative z-10 flex items-baseline gap-2 mb-6">
                   <span className="text-6xl font-black text-white">100%</span>
                   <span className="text-sm font-bold text-slate-400">pour vous</span>
                 </div>
-                
-                <p className="relative z-10 text-sm text-slate-300 font-medium leading-relaxed">
-                  Zéro commission cachée. La relation financière vous appartient totalement. Vous négociez vos tarifs en direct avec les parents et vous encaissez l'intégralité de votre salaire.
-                </p>
+                <p className="relative z-10 text-sm text-slate-300 font-medium leading-relaxed">Zéro commission cachée. La relation financière vous appartient totalement. Vous négociez vos tarifs en direct avec les parents et vous encaissez l'intégralité de votre salaire.</p>
               </div>
             </motion.div>
           </div>
         </div>
       </section>
 
-      {/* ==========================================
-          SECTION 3 : LE PROTOCOLE DE SÉLECTION (GLORIFIANT)
-      ========================================== */}
       <section className="py-24 bg-slate-50 relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 relative z-10">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeInUp} className="text-center max-w-3xl mx-auto mb-16">
@@ -187,9 +157,6 @@ export default function CharteQualiteProf() {
         </div>
       </section>
 
-      {/* ==========================================
-          SECTION 4 : LE SYSTÈME DE DISTINCTION (BADGES)
-      ========================================== */}
       <section className="py-24 bg-slate-900 relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 mix-blend-overlay" />
         <div className="max-w-7xl mx-auto px-6 relative z-10">
@@ -200,32 +167,12 @@ export default function CharteQualiteProf() {
 
           <div className="grid md:grid-cols-3 gap-6">
             {[
-              { 
-                icon: '🏅', 
-                title: 'Badge Pionnier', 
-                desc: 'Décerné aux premiers professeurs qui ont rejoint l\'aventure. Vous faites partie des fondateurs de l\'élite.',
-                color: 'from-amber-400 to-amber-600',
-                textColor: 'text-amber-400'
-              },
-              { 
-                icon: '🏫', 
-                title: 'Badge Académique', 
-                desc: 'Réservé aux professeurs exerçant en collège ou lycée. Votre réputation a été validée sur le terrain.',
-                color: 'from-blue-400 to-blue-600',
-                textColor: 'text-blue-400'
-              },
-              { 
-                icon: '🌟', 
-                title: 'Badge Super Prof', 
-                desc: 'L\'élite absolue. Attribué aux professeurs ayant les meilleurs retours, une ponctualité irréprochable et des résultats.',
-                color: 'from-emerald-400 to-emerald-600',
-                textColor: 'text-emerald-400'
-              }
+              { icon: '🏅', title: 'Badge Pionnier', desc: 'Décerné aux premiers professeurs qui ont rejoint l\'aventure. Vous faites partie des fondateurs de l\'élite.', color: 'from-amber-400 to-amber-600', textColor: 'text-amber-400' },
+              { icon: '🏫', title: 'Badge Académique', desc: 'Réservé aux professeurs exerçant en collège ou lycée. Votre réputation a été validée sur le terrain.', color: 'from-blue-400 to-blue-600', textColor: 'text-blue-400' },
+              { icon: '🌟', title: 'Badge Super Prof', desc: 'L\'élite absolue. Attribué aux professeurs ayant les meilleurs retours, une ponctualité irréprochable et des résultats.', color: 'from-emerald-400 to-emerald-600', textColor: 'text-emerald-400' }
             ].map((badge, i) => (
               <motion.div key={i} initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeInUp} className="bg-white/5 border border-white/10 rounded-3xl p-8 hover:bg-white/10 transition-colors group">
-                <div className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${badge.color} flex items-center justify-center text-4xl shadow-lg mb-6 group-hover:scale-110 transition-transform`}>
-                  {badge.icon}
-                </div>
+                <div className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${badge.color} flex items-center justify-center text-4xl shadow-lg mb-6 group-hover:scale-110 transition-transform`}>{badge.icon}</div>
                 <h4 className={`text-xl font-black mb-3 ${badge.textColor}`}>{badge.title}</h4>
                 <p className="text-slate-300 font-medium leading-relaxed text-sm">{badge.desc}</p>
               </motion.div>
@@ -234,9 +181,6 @@ export default function CharteQualiteProf() {
         </div>
       </section>
 
-      {/* ==========================================
-          SECTION 5 : VOS DROITS (PROTECTION)
-      ========================================== */}
       <section className="py-24 bg-white relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 relative z-10">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeInUp} className="text-center max-w-3xl mx-auto mb-16">
@@ -263,44 +207,21 @@ export default function CharteQualiteProf() {
         </div>
       </section>
 
-      {/* ==========================================
-          SECTION 6 : FAQ INTERACTIVE
-      ========================================== */}
       <section className="py-24 bg-slate-50 relative border-t border-slate-200">
         <div className="max-w-4xl mx-auto px-6">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeInUp} className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-black text-slate-900 mb-6 tracking-tight">Questions Fréquentes.</h2>
-            <p className="text-lg text-slate-600 font-medium">Tout ce que vous devez savoir avant de rejoindre l'élite.</p>
           </motion.div>
-
           <div className="space-y-4">
             {faqs.map((faq, index) => (
-              <motion.div 
-                key={index} 
-                initial="hidden" 
-                whileInView="visible" 
-                viewport={{ once: true }} 
-                variants={fadeInUp}
-                className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm"
-              >
-                <button 
-                  onClick={() => setOpenFaq(openFaq === index ? null : index)}
-                  className="w-full px-6 py-5 text-left flex items-center justify-between focus:outline-none hover:bg-slate-50 transition-colors"
-                >
+              <motion.div key={index} initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeInUp} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                <button onClick={() => setOpenFaq(openFaq === index ? null : index)} className="w-full px-6 py-5 text-left flex items-center justify-between focus:outline-none hover:bg-slate-50 transition-colors">
                   <span className="font-bold text-slate-900 text-lg">{faq.q}</span>
-                  <span className={`text-slate-400 transform transition-transform duration-300 ${openFaq === index ? 'rotate-180' : ''}`}>
-                    ▼
-                  </span>
+                  <span className={`text-slate-400 transform transition-transform duration-300 ${openFaq === index ? 'rotate-180' : ''}`}>▼</span>
                 </button>
                 <AnimatePresence>
                   {openFaq === index && (
-                    <motion.div 
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="px-6 pb-6 text-slate-600 font-medium leading-relaxed border-t border-slate-100 pt-4"
-                    >
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.3 }} className="px-6 pb-6 text-slate-600 font-medium leading-relaxed border-t border-slate-100 pt-4">
                       {faq.a}
                     </motion.div>
                   )}
@@ -311,26 +232,15 @@ export default function CharteQualiteProf() {
         </div>
       </section>
 
-      {/* ==========================================
-          SECTION 7 : CTA FINAL
-      ========================================== */}
       <section className="py-24 bg-white relative border-t border-slate-200">
         <div className="max-w-4xl mx-auto px-6 text-center">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeInUp}>
             <h2 className="text-4xl md:text-6xl font-black text-slate-900 mb-6 tracking-tight">Prêt à rejoindre l'élite ?</h2>
-            <p className="text-xl text-slate-600 mb-12 max-w-2xl mx-auto font-medium">
-              Ne laissez plus votre talent au hasard. Rejoignez le réseau des professeurs d'élite de Djibouti.
-            </p>
-            <Link 
-              href="/inscription/professeur" 
-              className="inline-flex items-center justify-center gap-4 w-full md:w-auto px-12 py-6 rounded-2xl font-black text-white bg-slate-950 hover:bg-slate-800 shadow-2xl transition-all hover:-translate-y-1 text-xl group"
-            >
+            <p className="text-xl text-slate-600 mb-12 max-w-2xl mx-auto font-medium">Ne laissez plus votre talent au hasard. Rejoignez le réseau des professeurs d'élite de Djibouti.</p>
+            <Link href="/inscription/professeur" className="inline-flex items-center justify-center gap-4 w-full md:w-auto px-12 py-6 rounded-2xl font-black text-white bg-slate-950 hover:bg-slate-800 shadow-2xl transition-all hover:-translate-y-1 text-xl group">
               J'accepte le Pacte et je postule
               <svg className="w-6 h-6 group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
             </Link>
-            <p className="mt-6 text-sm text-slate-500 font-bold">
-              🔒 Connexion sécurisée · Aucun paiement requis à cette étape
-            </p>
           </motion.div>
         </div>
       </section>
