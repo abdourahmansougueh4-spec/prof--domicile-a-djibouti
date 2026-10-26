@@ -1,9 +1,61 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useId, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+
+// ============================================================
+// LOGO (identique à la page d'accueil)
+// ============================================================
+function Logo({ size = 'md', onDark = false }: { size?: 'sm' | 'md' | 'lg'; onDark?: boolean }) {
+  const uid = useId().replace(/:/g, '')
+  const sizes = {
+    sm: { box: 'w-8 h-8', icon: 'w-6 h-6', djib: 'text-[8px]', super: 'text-sm' },
+    md: { box: 'w-10 h-10', icon: 'w-8 h-8', djib: 'text-[9px]', super: 'text-lg' },
+    lg: { box: 'w-14 h-14', icon: 'w-11 h-11', djib: 'text-xs', super: 'text-2xl' },
+  }
+  const s = sizes[size]
+  const bgId = `logoBg${uid}`
+  const glowId = `logoGlow${uid}`
+
+  return (
+    <div className="flex items-center gap-2.5">
+      <div className={`${s.box} rounded-xl shadow-lg shadow-blue-600/20 flex-shrink-0`}>
+        <svg className={`${s.icon} w-full h-full`} viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id={bgId} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#1e3a8a" />
+              <stop offset="50%" stopColor="#2563eb" />
+              <stop offset="100%" stopColor="#059669" />
+            </linearGradient>
+            <radialGradient id={glowId} cx="30%" cy="20%" r="70%">
+              <stop offset="0%" stopColor="white" stopOpacity="0.35" />
+              <stop offset="100%" stopColor="white" stopOpacity="0" />
+            </radialGradient>
+          </defs>
+          <rect width="120" height="120" rx="28" fill={`url(#${bgId})`} />
+          <rect width="120" height="120" rx="28" fill={`url(#${glowId})`} />
+          <g transform="translate(60, 68)">
+            <path d="M0 -26 L36 -10 L0 8 L-36 -10 Z" fill="white" />
+            <path d="M-24 -2 L-24 16 Q-24 26 -12 26 L12 26 Q24 26 24 16 L24 -2 L0 8 Z" fill="white" opacity="0.85" />
+            <path d="M36 -10 Q43 -3 43 6" stroke="#fbbf24" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+            <circle cx="43" cy="9" r="3.5" fill="#fbbf24" />
+          </g>
+          <g transform="translate(93, 26)">
+            <path d="M0 -9 L2.6 -2.9 L9.4 -2.9 L4 -1 L6.2 5.6 L0 1.8 L-6.2 5.6 L-4 -1 L-9.4 -2.9 L-2.6 -2.9 Z" fill="#dc2626" />
+          </g>
+        </svg>
+      </div>
+      <div className="flex flex-col leading-none">
+        <span className={`${s.djib} font-black tracking-[0.18em] uppercase text-slate-400`}>Djib</span>
+        <span className={`${s.super} font-black tracking-tight -mt-0.5 ${onDark ? 'text-white' : 'text-slate-900'}`}>
+          Superprof
+        </span>
+      </div>
+    </div>
+  )
+}
 
 // ============================================================
 // VALEURS
@@ -71,7 +123,7 @@ const HISTOIRE = [
     annee: '2026',
     emoji: '🚀',
     titre: 'Lancement',
-    desc: 'Prof À Domicile Djibouti voit le jour. Une plateforme moderne, vérifiée, et 100% adaptée au contexte djiboutien.',
+    desc: 'Djib Superprof voit le jour. Une plateforme moderne, vérifiée, et 100% adaptée au contexte djiboutien.',
     couleur: 'from-emerald-500 to-teal-600',
   },
   {
@@ -146,7 +198,7 @@ const QUARTIERS = [
 // ============================================================
 
 export default function AProposPage() {
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   const [stats, setStats] = useState({
     profs: 0,
@@ -185,6 +237,9 @@ export default function AProposPage() {
     chargerStats()
   }, [supabase])
 
+  // ✅ Comme sur la homepage : parents + 40
+  const parentsAffiches = (stats.parents || 0) + 40
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-blue-50/30 relative overflow-hidden">
       {/* Blobs */}
@@ -194,9 +249,9 @@ export default function AProposPage() {
       {/* NAVBAR */}
       <nav className="relative z-40 backdrop-blur-md bg-white/80 border-b border-white/40 sticky top-0">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 flex justify-between items-center">
+          {/* ✅ Logo Djib Superprof identique à la homepage */}
           <Link href="/" className="flex items-center gap-2">
-            <span className="text-2xl font-black bg-gradient-to-r from-blue-700 to-emerald-600 bg-clip-text text-transparent">Prof À Domicile</span>
-            <span className="text-2xl">🇩🇯</span>
+            <Logo size="md" />
           </Link>
           <div className="flex items-center gap-2">
             <Link href="/" className="text-sm font-medium text-slate-600 hover:text-emerald-600 px-3 py-2">← Accueil</Link>
@@ -221,7 +276,7 @@ export default function AProposPage() {
               </span>
             </h1>
             <p className="text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
-              Prof À Domicile est né d'une conviction simple : <strong className="text-slate-900">chaque enfant de Djibouti mérite un professeur de qualité</strong>, et chaque professeur mérite d'être reconnu à sa juste valeur.
+              Djib Superprof est né d'une conviction simple : <strong className="text-slate-900">chaque enfant de Djibouti mérite un professeur de qualité</strong>, et chaque professeur mérite d'être reconnu à sa juste valeur.
             </p>
           </motion.div>
         </div>
@@ -276,7 +331,7 @@ export default function AProposPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
               { emoji: '👨‍🏫', valeur: stats.profs, label: 'Professeurs vérifiés' },
-              { emoji: '👨‍👩‍👧', valeur: stats.parents, label: 'Parents inscrits' },
+              { emoji: '👨‍👩‍👧', valeur: parentsAffiches, label: 'Parents inscrits' }, // ✅ +40 inclus
               { emoji: '🎓', valeur: stats.eleves, label: 'Élèves accompagnés' },
               { emoji: '📍', valeur: stats.quartiers, label: 'Quartiers couverts' },
             ].map((s, i) => (
@@ -539,14 +594,12 @@ export default function AProposPage() {
       {/* FOOTER MINI */}
       <footer className="relative z-10 bg-slate-900 text-white py-8 px-4 md:px-6">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <span className="font-black bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
-              Prof À Domicile
-            </span>
-            <span>🇩🇯</span>
-          </div>
+          {/* ✅ Logo Djib Superprof identique à la homepage (version dark) */}
+          <Link href="/">
+            <Logo size="md" onDark />
+          </Link>
           <p className="text-xs text-slate-500">
-            © 2026 Prof À Domicile Djibouti — Tous droits réservés
+            © 2026 Djib Superprof — Tous droits réservés
           </p>
           <div className="flex gap-3 text-sm">
             <a href="https://wa.me/25377741482" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-white">

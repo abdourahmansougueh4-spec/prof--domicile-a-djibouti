@@ -1,15 +1,77 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useId } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 // ============================================================
-// TYPES
+// LOGO (identique à la page d'accueil)
 // ============================================================
+function Logo({ size = 'md', onDark = false }: { size?: 'sm' | 'md' | 'lg'; onDark?: boolean }) {
+  const uid = useId().replace(/:/g, '')
+  const sizes = {
+    sm: { box: 'w-8 h-8', icon: 'w-6 h-6', djib: 'text-[8px]', super: 'text-sm' },
+    md: { box: 'w-10 h-10', icon: 'w-8 h-8', djib: 'text-[9px]', super: 'text-lg' },
+    lg: { box: 'w-14 h-14', icon: 'w-11 h-11', djib: 'text-xs', super: 'text-2xl' },
+  }
+  const s = sizes[size]
+  const bgId = `logoBg${uid}`
+  const glowId = `logoGlow${uid}`
 
+  return (
+    <div className="flex items-center gap-2.5">
+      <div className={`${s.box} rounded-xl shadow-lg shadow-blue-600/20 flex-shrink-0`}>
+        <svg className={`${s.icon} w-full h-full`} viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id={bgId} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#1e3a8a" />
+              <stop offset="50%" stopColor="#2563eb" />
+              <stop offset="100%" stopColor="#059669" />
+            </linearGradient>
+            <radialGradient id={glowId} cx="30%" cy="20%" r="70%">
+              <stop offset="0%" stopColor="white" stopOpacity="0.35" />
+              <stop offset="100%" stopColor="white" stopOpacity="0" />
+            </radialGradient>
+          </defs>
+          <rect width="120" height="120" rx="28" fill={`url(#${bgId})`} />
+          <rect width="120" height="120" rx="28" fill={`url(#${glowId})`} />
+          <g transform="translate(60, 68)">
+            <path d="M0 -26 L36 -10 L0 8 L-36 -10 Z" fill="white" />
+            <path d="M-24 -2 L-24 16 Q-24 26 -12 26 L12 26 Q24 26 24 16 L24 -2 L0 8 Z" fill="white" opacity="0.85" />
+            <path d="M36 -10 Q43 -3 43 6" stroke="#fbbf24" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+            <circle cx="43" cy="9" r="3.5" fill="#fbbf24" />
+          </g>
+          <g transform="translate(93, 26)">
+            <path d="M0 -9 L2.6 -2.9 L9.4 -2.9 L4 -1 L6.2 5.6 L0 1.8 L-6.2 5.6 L-4 -1 L-9.4 -2.9 L-2.6 -2.9 Z" fill="#dc2626" />
+          </g>
+        </svg>
+      </div>
+      <div className="flex flex-col leading-none">
+        <span className={`${s.djib} font-black tracking-[0.18em] uppercase text-slate-400`}>Djib</span>
+        <span className={`${s.super} font-black tracking-tight -mt-0.5 ${onDark ? 'text-white' : 'text-slate-900'}`}>
+          Superprof
+        </span>
+      </div>
+    </div>
+  )
+}
+
+// ============================================================
+// ICÔNES SVG (premium, plus élégantes que les emojis)
+// ============================================================
+function IconCheck({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+    </svg>
+  )
+}
+
+// ============================================================
+// TYPES & HELPERS
+// ============================================================
 type Enfant = {
   prenom: string
   niveaux: string[]
@@ -24,10 +86,6 @@ const fadeUp = {
   animate: { opacity: 1, y: 0 },
   exit: { opacity: 0, y: -20 },
 }
-
-// ============================================================
-// VALIDATION HELPERS
-// ============================================================
 
 const emailValide = (email: string): boolean => {
   const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
@@ -48,7 +106,6 @@ const formaterTelephone = (valeur: string): string => {
 // ============================================================
 // COMPOSANT PRINCIPAL
 // ============================================================
-
 export default function InscriptionParent() {
   const router = useRouter()
   const supabase = createClient()
@@ -83,10 +140,6 @@ export default function InscriptionParent() {
     coursADomicile: true,
   })
 
-  // ============================================================
-  // HELPERS ENFANTS
-  // ============================================================
-
   const ajouterEnfant = () => {
     setEnfants([
       ...enfants,
@@ -107,11 +160,7 @@ export default function InscriptionParent() {
     }
   }
 
-  const modifierEnfant = (
-    index: number,
-    champ: keyof Enfant,
-    valeur: string | string[]
-  ) => {
+  const modifierEnfant = (index: number, champ: keyof Enfant, valeur: string | string[]) => {
     const nouveaux = [...enfants]
     nouveaux[index] = { ...nouveaux[index], [champ]: valeur }
     setEnfants(nouveaux)
@@ -170,9 +219,7 @@ export default function InscriptionParent() {
 
     if (enfant.languesSpeciales.includes(langue)) {
       enfant.languesSpeciales = enfant.languesSpeciales.filter((l) => l !== langue)
-      enfant.precisionsLangues = enfant.precisionsLangues.filter(
-        (p) => !p.startsWith(langue)
-      )
+      enfant.precisionsLangues = enfant.precisionsLangues.filter((p) => !p.startsWith(langue))
     } else {
       enfant.languesSpeciales = [...enfant.languesSpeciales, langue]
     }
@@ -180,10 +227,6 @@ export default function InscriptionParent() {
     nouveaux[index] = enfant
     setEnfants(nouveaux)
   }
-
-  // ============================================================
-  // DÉRIVÉS
-  // ============================================================
 
   const classesDisponibles = (niveauxChoisis: string[]) => {
     const classes: string[] = []
@@ -201,12 +244,10 @@ export default function InscriptionParent() {
 
   const matieresParNiveaux = (niveauxChoisis: string[]) => {
     const matieres: string[] = []
-    if (niveauxChoisis.includes('primaire'))
-      matieres.push('Toutes matières (français + arabe)')
+    if (niveauxChoisis.includes('primaire')) matieres.push('Toutes matières (français + arabe)')
     if (niveauxChoisis.includes('college'))
       matieres.push('Maths, Physique, SVT, Français, Anglais, Arabe')
-    if (niveauxChoisis.includes('lycee'))
-      matieres.push('Maths (autres matières bientôt)')
+    if (niveauxChoisis.includes('lycee')) matieres.push('Maths (autres matières bientôt)')
     return matieres
   }
 
@@ -246,10 +287,6 @@ export default function InscriptionParent() {
     return precisions
   }
 
-  // ============================================================
-  // VALIDATION ÉTAPES
-  // ============================================================
-
   const validerEtape1 = (): boolean => {
     if (!parent.nomComplet.trim()) {
       setErreur('Veuillez saisir votre nom complet')
@@ -264,7 +301,7 @@ export default function InscriptionParent() {
       return false
     }
     if (!emailValide(parent.email.trim())) {
-      setErreur('Le format de l\'adresse email est invalide (ex : nom@email.com)')
+      setErreur("Le format de l'adresse email est invalide (ex : nom@email.com)")
       return false
     }
     if (!parent.motDePasse) {
@@ -297,9 +334,7 @@ export default function InscriptionParent() {
         return false
       }
 
-      const aNiveauxNormaux = e.niveaux.some((n) =>
-        ['primaire', 'college', 'lycee'].includes(n)
-      )
+      const aNiveauxNormaux = e.niveaux.some((n) => ['primaire', 'college', 'lycee'].includes(n))
       if (aNiveauxNormaux && e.classes.length === 0) {
         setErreur(`Enfant ${num} : cochez au moins une classe`)
         return false
@@ -337,10 +372,6 @@ export default function InscriptionParent() {
     setEtape(etape - 1)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
-
-  // ============================================================
-  // SOUMISSION
-  // ============================================================
 
   const soumettre = async () => {
     setLoading(true)
@@ -392,9 +423,7 @@ export default function InscriptionParent() {
       const { error: parentError } = await supabase.from('parents').insert({
         id: userId,
         nombre_enfants: enfants.length,
-        preference_organisation: preferences.unSeulProf
-          ? 'un_seul_prof'
-          : 'un_prof_par_matiere',
+        preference_organisation: preferences.unSeulProf ? 'un_seul_prof' : 'un_prof_par_matiere',
         cours_a_domicile: preferences.coursADomicile,
       })
       if (parentError) console.error('Erreur parent:', JSON.stringify(parentError, null, 2))
@@ -412,7 +441,7 @@ export default function InscriptionParent() {
       const { error: enfantsError } = await supabase.from('enfants').insert(enfantsData)
       if (enfantsError) console.error('Erreur enfants:', JSON.stringify(enfantsError, null, 2))
 
-      alert('🎉 Inscription réussie !\n\nBienvenue sur Prof À Domicile Djibouti. Votre espace parent est prêt.')
+      alert('🎉 Inscription réussie !\n\nBienvenue sur Djib Superprof. Votre espace parent est prêt.')
       router.push('/espace-parent')
     } catch (err) {
       console.error('Erreur générale:', err)
@@ -422,10 +451,6 @@ export default function InscriptionParent() {
     }
   }
 
-  // ============================================================
-  // CONFIG ÉTAPES
-  // ============================================================
-
   const etapes = [
     { num: 1, titre: 'Vos informations', desc: 'Nom, email, contact' },
     { num: 2, titre: 'Vos enfants', desc: 'Niveaux, classes, langues' },
@@ -433,156 +458,151 @@ export default function InscriptionParent() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-emerald-50 relative overflow-hidden">
-      {/* Décor animé */}
-      <motion.div
-        className="absolute top-[-100px] left-[-100px] w-[500px] h-[500px] bg-blue-300/30 rounded-full blur-3xl"
-        animate={{ x: [0, 50, 0], y: [0, 30, 0] }}
-        transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
-      />
-      <motion.div
-        className="absolute bottom-[-100px] right-[-100px] w-[600px] h-[600px] bg-emerald-300/30 rounded-full blur-3xl"
-        animate={{ x: [0, -50, 0], y: [0, -30, 0] }}
-        transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
-      />
+    <div className="min-h-screen relative overflow-hidden bg-[#fafbfc]">
+      {/* Fond subtil — gradients très doux + grille masquée */}
+      <div className="absolute inset-0 -z-10">
+        <motion.div
+          animate={{ x: [0, 30, 0], y: [0, 20, 0] }}
+          transition={{ duration: 22, repeat: Infinity, ease: 'easeInOut' }}
+          className="absolute -top-40 -left-40 w-[600px] h-[600px] bg-blue-300/[0.08] rounded-full blur-[120px]"
+        />
+        <motion.div
+          animate={{ x: [0, -30, 0], y: [0, -20, 0] }}
+          transition={{ duration: 26, repeat: Infinity, ease: 'easeInOut' }}
+          className="absolute -bottom-40 -right-40 w-[600px] h-[600px] bg-emerald-300/[0.08] rounded-full blur-[120px]"
+        />
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(15,23,42,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(15,23,42,0.025)_1px,transparent_1px)] bg-[size:48px_48px] [mask-image:radial-gradient(ellipse_at_center,black,transparent_75%)]" />
+      </div>
 
-      {/* Nav */}
-      <nav className="relative z-10 backdrop-blur-md bg-white/70 border-b border-white/40">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-          <Link href="/" className="flex items-center gap-2">
-            <span className="text-2xl font-black bg-gradient-to-r from-blue-700 to-emerald-600 bg-clip-text text-transparent">
-              Prof À Domicile
-            </span>
-            <span className="text-xl">🇩🇯</span>
+      {/* NAVBAR */}
+      <nav className="relative z-20 bg-white/70 backdrop-blur-xl border-b border-slate-200/60">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex justify-between items-center">
+          <Link href="/" className="flex items-center">
+            <Logo size="md" />
           </Link>
-          <a
-            href="https://wa.me/25377741482"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm font-medium text-slate-600 hover:text-emerald-600 transition-colors"
-          >
-            💬 Aide
-          </a>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/login"
+              className="hidden sm:inline-flex text-xs font-bold text-slate-500 hover:text-blue-700 transition-colors tracking-wide uppercase"
+            >
+              Déjà un compte ?
+            </Link>
+            <a
+              href="https://wa.me/25377741482"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-bold text-slate-500 hover:text-emerald-600 transition-colors tracking-wide uppercase"
+            >
+              Aide
+            </a>
+          </div>
         </div>
       </nav>
 
-      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-12">
-        {/* Header */}
+      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
+        {/* HEADER */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-12"
+          className="text-center mb-10 sm:mb-14"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/60 backdrop-blur-sm rounded-full border border-white/80 shadow-sm mb-6">
-            <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-            <span className="text-xs font-semibold text-slate-700 uppercase tracking-wide">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white rounded-full border border-slate-200 shadow-sm mb-6">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-blue-500"></span>
+            </span>
+            <span className="text-[10px] font-black text-slate-600 uppercase tracking-[0.15em]">
               Inscription parent · Gratuite
             </span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-4 tracking-tight">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 mb-3 sm:mb-4 tracking-tight leading-[1.1]">
             Trouvez le professeur idéal
             <br />
             <span className="bg-gradient-to-r from-blue-700 via-teal-600 to-emerald-600 bg-clip-text text-transparent">
-              pour vos enfants à Djibouti
+              sur Djib Superprof
             </span>
           </h1>
-          <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-            Rejoignez des centaines de familles qui ont trouvé un prof vérifié en moins de 48h.
+          <p className="text-sm sm:text-base text-slate-500 max-w-xl mx-auto leading-relaxed">
+            Rejoignez les familles qui ont trouvé un prof vérifié en moins de 48h.
           </p>
         </motion.div>
 
-        <div className="grid lg:grid-cols-[280px_1fr] gap-8">
-          {/* Sidebar progression */}
+        <div className="grid lg:grid-cols-[260px_1fr] gap-6 lg:gap-10">
+          {/* SIDEBAR PROGRESSION */}
           <motion.aside
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
             className="hidden lg:block"
           >
-            <div className="bg-white/70 backdrop-blur-xl rounded-3xl p-6 border border-white/80 shadow-xl shadow-blue-900/5 sticky top-8">
-              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-6">
+            <div className="bg-white rounded-2xl p-6 border border-slate-200/70 shadow-[0_1px_3px_rgba(15,23,42,0.04),0_10px_40px_-15px_rgba(15,23,42,0.08)] sticky top-6">
+              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] mb-6">
                 Votre progression
               </h3>
               <div className="space-y-1">
                 {etapes.map((e) => (
-                  <div key={e.num} className="flex gap-4">
+                  <div key={e.num} className="flex gap-3.5">
                     <div className="flex flex-col items-center">
                       <motion.div
                         animate={{
-                          scale: etape === e.num ? 1.1 : 1,
+                          scale: etape === e.num ? 1.05 : 1,
                           backgroundColor:
-                            etape > e.num
-                              ? '#059669'
-                              : etape === e.num
-                              ? '#1d4ed8'
-                              : '#e2e8f0',
+                            etape > e.num ? '#059669' : etape === e.num ? '#1d4ed8' : '#f1f5f9',
+                          color: etape >= e.num ? '#ffffff' : '#94a3b8',
                         }}
                         transition={{ duration: 0.3 }}
-                        className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shadow-lg"
+                        className="w-9 h-9 rounded-full flex items-center justify-center font-black text-sm shadow-sm"
                       >
-                        {etape > e.num ? (
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                          </svg>
-                        ) : (
-                          e.num
-                        )}
+                        {etape > e.num ? <IconCheck className="w-4 h-4" /> : e.num}
                       </motion.div>
                       {e.num < 3 && (
                         <div
-                          className={`w-0.5 h-10 my-1 transition-colors ${
-                            etape > e.num ? 'bg-emerald-500' : 'bg-slate-200'
+                          className={`w-[2px] h-10 my-1 transition-colors ${
+                            etape > e.num ? 'bg-emerald-500' : 'bg-slate-100'
                           }`}
                         />
                       )}
                     </div>
-                    <div className="pt-2 pb-4">
+                    <div className="pt-1.5 pb-4">
                       <div
-                        className={`font-bold text-sm transition-colors ${
+                        className={`font-bold text-[13px] transition-colors leading-tight ${
                           etape >= e.num ? 'text-slate-900' : 'text-slate-400'
                         }`}
                       >
                         {e.titre}
                       </div>
-                      <div className="text-xs text-slate-500">{e.desc}</div>
+                      <div className="text-[11px] text-slate-500 mt-0.5">{e.desc}</div>
                     </div>
                   </div>
                 ))}
               </div>
 
-              <div className="mt-6 pt-6 border-t border-slate-200/70 space-y-3">
-                <div className="flex items-center gap-2 text-xs text-slate-600">
-                  <span className="text-base">🔒</span>
-                  <span>Données chiffrées</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-slate-600">
-                  <span className="text-base">✅</span>
-                  <span>Profs vérifiés</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-slate-600">
-                  <span className="text-base">⚡</span>
-                  <span>Réponse sous 48h</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-slate-600">
-                  <span className="text-base">🇩🇯</span>
-                  <span>100% djiboutien</span>
-                </div>
+              <div className="mt-6 pt-6 border-t border-slate-100 space-y-3">
+                {[
+                  { emoji: '🔒', text: 'Données chiffrées' },
+                  { emoji: '✅', text: 'Profs vérifiés' },
+                  { emoji: '⚡', text: 'Réponse sous 48h' },
+                  { emoji: '🇩🇯', text: '100% djiboutien' },
+                ].map((item) => (
+                  <div key={item.text} className="flex items-center gap-2.5 text-[11px] text-slate-500 font-medium">
+                    <span className="text-sm">{item.emoji}</span>
+                    <span>{item.text}</span>
+                  </div>
+                ))}
               </div>
             </div>
           </motion.aside>
 
-          {/* Formulaire */}
-          <div>
+          {/* FORMULAIRE */}
+          <div className="min-w-0">
             {/* Barre mobile */}
-            <div className="lg:hidden mb-6 flex gap-1">
+            <div className="lg:hidden mb-5 flex gap-1.5">
               {[1, 2, 3].map((n) => (
                 <div
                   key={n}
-                  className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${
-                    n <= etape
-                      ? 'bg-gradient-to-r from-blue-700 to-emerald-600'
-                      : 'bg-slate-200'
+                  className={`h-1 flex-1 rounded-full transition-all duration-500 ${
+                    n <= etape ? 'bg-gradient-to-r from-blue-700 to-emerald-600' : 'bg-slate-200'
                   }`}
                 />
               ))}
@@ -595,32 +615,28 @@ export default function InscriptionParent() {
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="mb-6 bg-red-50/90 backdrop-blur-sm border border-red-200 rounded-2xl p-4 flex items-start gap-3"
+                  className="mb-5 bg-red-50 border border-red-200 rounded-xl p-3.5 flex items-start gap-3"
                 >
-                  <span className="text-xl">⚠️</span>
-                  <p className="text-red-700 text-sm font-medium">{erreur}</p>
+                  <span className="text-base flex-shrink-0">⚠️</span>
+                  <p className="text-red-700 text-[13px] font-semibold leading-relaxed">{erreur}</p>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-white/80 shadow-2xl shadow-blue-900/10 overflow-hidden">
+            {/* CARTE PRINCIPALE */}
+            <div className="bg-white rounded-2xl border border-slate-200/70 shadow-[0_1px_3px_rgba(15,23,42,0.04),0_20px_60px_-20px_rgba(15,23,42,0.12)] overflow-hidden">
               <AnimatePresence mode="wait">
-                {/* ============================================================ */}
                 {/* ÉTAPE 1 */}
-                {/* ============================================================ */}
                 {etape === 1 && (
-                  <motion.div
-                    key="etape1"
-                    {...fadeUp}
-                    transition={{ duration: 0.4 }}
-                    className="p-8 md:p-10"
-                  >
-                    <div className="mb-8">
-                      <div className="text-xs font-bold text-blue-700 uppercase tracking-wider mb-2">
-                        Étape 1 / 3
+                  <motion.div key="etape1" {...fadeUp} transition={{ duration: 0.35 }} className="p-6 sm:p-8 md:p-10">
+                    <div className="mb-7">
+                      <div className="text-[10px] font-black text-blue-700 uppercase tracking-[0.15em] mb-2">
+                        Étape 1 sur 3
                       </div>
-                      <h2 className="text-3xl font-black text-slate-900">Vos informations</h2>
-                      <p className="text-slate-500 mt-2">
+                      <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                        Vos informations
+                      </h2>
+                      <p className="text-sm text-slate-500 mt-1.5">
                         Ces informations resteront strictement confidentielles.
                       </p>
                     </div>
@@ -652,7 +668,7 @@ export default function InscriptionParent() {
                         hint="Utilisez un mélange de lettres et de chiffres."
                       />
 
-                      <div className="grid md:grid-cols-2 gap-5">
+                      <div className="grid sm:grid-cols-2 gap-4">
                         <TelephoneField
                           label="Téléphone"
                           value={parent.telephone}
@@ -673,14 +689,16 @@ export default function InscriptionParent() {
                         hint="Facultatif, mais utile pour vous proposer des profs proches."
                       />
 
-                      <div className="bg-gradient-to-br from-blue-50 to-emerald-50 rounded-2xl p-5 border border-blue-200">
+                      <div className="bg-slate-50 rounded-xl p-4 border border-slate-200/70">
                         <div className="flex items-start gap-3">
-                          <span className="text-xl">🛡️</span>
+                          <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-sm flex-shrink-0">
+                            🛡️
+                          </div>
                           <div>
-                            <div className="text-sm font-bold text-slate-800 mb-1">
+                            <div className="text-[13px] font-bold text-slate-900 mb-1">
                               Vos données sont protégées
                             </div>
-                            <p className="text-xs text-slate-600 leading-relaxed">
+                            <p className="text-[12px] text-slate-600 leading-relaxed">
                               Votre email et votre mot de passe sont chiffrés. Seuls les professeurs que vous contactez verront vos coordonnées.
                             </p>
                           </div>
@@ -690,22 +708,17 @@ export default function InscriptionParent() {
                   </motion.div>
                 )}
 
-                {/* ============================================================ */}
                 {/* ÉTAPE 2 */}
-                {/* ============================================================ */}
                 {etape === 2 && (
-                  <motion.div
-                    key="etape2"
-                    {...fadeUp}
-                    transition={{ duration: 0.4 }}
-                    className="p-8 md:p-10"
-                  >
-                    <div className="mb-8">
-                      <div className="text-xs font-bold text-blue-700 uppercase tracking-wider mb-2">
-                        Étape 2 / 3
+                  <motion.div key="etape2" {...fadeUp} transition={{ duration: 0.35 }} className="p-6 sm:p-8 md:p-10">
+                    <div className="mb-7">
+                      <div className="text-[10px] font-black text-blue-700 uppercase tracking-[0.15em] mb-2">
+                        Étape 2 sur 3
                       </div>
-                      <h2 className="text-3xl font-black text-slate-900">Vos enfants</h2>
-                      <p className="text-slate-500 mt-2">
+                      <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                        Vos enfants
+                      </h2>
+                      <p className="text-sm text-slate-500 mt-1.5">
                         Ajoutez autant d'enfants que nécessaire — c'est gratuit.
                       </p>
                     </div>
@@ -725,23 +738,19 @@ export default function InscriptionParent() {
                             key={index}
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="bg-slate-50/70 backdrop-blur-sm rounded-2xl p-5 sm:p-6 border border-slate-200"
+                            className="bg-slate-50/70 rounded-2xl p-4 sm:p-6 border border-slate-200/70"
                           >
                             {/* Header enfant */}
                             <div className="flex justify-between items-center mb-5">
                               <div className="flex items-center gap-3">
-                                <motion.div
-                                  animate={{ scale: [1, 1.05, 1] }}
-                                  transition={{ duration: 0.5 }}
-                                  className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-700 to-emerald-600 text-white flex items-center justify-center font-black text-sm shadow-lg"
-                                >
+                                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-700 to-emerald-600 text-white flex items-center justify-center font-black text-sm shadow-md">
                                   {index + 1}
-                                </motion.div>
+                                </div>
                                 <div>
-                                  <div className="font-bold text-slate-800 text-sm">
+                                  <div className="font-bold text-slate-900 text-[13px]">
                                     Enfant {index + 1}
                                   </div>
-                                  <div className="text-xs text-slate-500">
+                                  <div className="text-[11px] text-slate-500">
                                     {enfant.prenom || 'Prénom non renseigné'}
                                   </div>
                                 </div>
@@ -750,9 +759,9 @@ export default function InscriptionParent() {
                                 <button
                                   type="button"
                                   onClick={() => supprimerEnfant(index)}
-                                  className="text-rose-500 hover:text-rose-700 hover:bg-rose-50 p-2 rounded-lg text-xs font-bold transition-colors"
+                                  className="text-rose-500 hover:text-rose-700 hover:bg-rose-50 px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-colors"
                                 >
-                                  ✕ Supprimer
+                                  Supprimer
                                 </button>
                               )}
                             </div>
@@ -766,23 +775,20 @@ export default function InscriptionParent() {
                               />
 
                               {/* Type de cours */}
-                              <div className="bg-white rounded-2xl p-5 border-2 border-blue-100">
+                              <div className="bg-white rounded-xl p-4 sm:p-5 border border-slate-200">
                                 <div className="mb-4">
-                                  <div className="font-bold text-slate-900 text-sm">
+                                  <div className="font-bold text-slate-900 text-[13px]">
                                     🎯 Type de cours souhaité
                                   </div>
-                                  <div className="text-xs text-slate-500 mt-0.5">
+                                  <div className="text-[11px] text-slate-500 mt-0.5">
                                     Cochez un ou plusieurs types
                                   </div>
                                 </div>
 
                                 {/* Soutien scolaire */}
                                 <div className="mb-5">
-                                  <div className="text-[11px] font-bold text-blue-700 uppercase tracking-wide mb-2 flex items-center gap-1 flex-wrap">
-                                    🎒 Soutien scolaire
-                                    <span className="text-slate-400 normal-case font-medium">
-                                      (nécessite un niveau)
-                                    </span>
+                                  <div className="text-[10px] font-black text-blue-700 uppercase tracking-[0.1em] mb-2.5">
+                                    Soutien scolaire
                                   </div>
                                   <div className="grid grid-cols-3 gap-2">
                                     {[
@@ -795,30 +801,28 @@ export default function InscriptionParent() {
                                         <motion.button
                                           key={n.val}
                                           type="button"
-                                          whileHover={{ scale: 1.03 }}
-                                          whileTap={{ scale: 0.97 }}
+                                          whileHover={{ scale: 1.02 }}
+                                          whileTap={{ scale: 0.98 }}
                                           onClick={() => toggleNiveau(index, n.val)}
-                                          className={`relative py-3 rounded-xl font-bold text-sm transition-all ${
+                                          className={`relative py-3 rounded-lg font-bold text-[12px] transition-all ${
                                             actif
-                                              ? 'bg-gradient-to-br from-blue-700 to-blue-600 text-white shadow-lg border-2 border-blue-800'
-                                              : 'bg-white text-slate-700 border-2 border-slate-200 hover:border-blue-300'
+                                              ? 'bg-gradient-to-br from-blue-700 to-blue-600 text-white shadow-md'
+                                              : 'bg-white text-slate-700 border border-slate-200 hover:border-blue-300'
                                           }`}
                                         >
                                           {actif && (
                                             <motion.div
-                                              initial={{ scale: 0, rotate: -180 }}
-                                              animate={{ scale: 1, rotate: 0 }}
-                                              className="absolute -top-2 -right-2 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-md border-2 border-blue-700"
+                                              initial={{ scale: 0 }}
+                                              animate={{ scale: 1 }}
+                                              className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-sm border border-blue-700"
                                             >
-                                              <svg className="w-2.5 h-2.5 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 13l4 4L19 7" />
-                                              </svg>
+                                              <IconCheck className="w-2.5 h-2.5 text-blue-700" />
                                             </motion.div>
                                           )}
                                           <div className="flex flex-col items-center gap-0.5">
-                                            <span className="text-xl">{n.emoji}</span>
+                                            <span className="text-lg">{n.emoji}</span>
                                             <span>{n.label}</span>
-                                            <span className={`text-[10px] font-semibold ${actif ? 'text-blue-100' : 'text-slate-400'}`}>
+                                            <span className={`text-[9px] font-semibold ${actif ? 'text-blue-100' : 'text-slate-400'}`}>
                                               {n.sousTitre}
                                             </span>
                                           </div>
@@ -828,12 +832,12 @@ export default function InscriptionParent() {
                                   </div>
                                 </div>
 
-                                {/* Coran / Langue */}
+                                {/* Langue spéciale */}
                                 <div>
-                                  <div className="text-[11px] font-bold text-emerald-700 uppercase tracking-wide mb-2 flex items-center gap-1 flex-wrap">
-                                    📕 Coran & Langue étrangère
-                                    <span className="text-emerald-600 normal-case font-bold">
-                                      (aucun niveau requis ✓)
+                                  <div className="text-[10px] font-black text-emerald-700 uppercase tracking-[0.1em] mb-2.5 flex items-center gap-1.5 flex-wrap">
+                                    Coran & Langue étrangère
+                                    <span className="text-emerald-600 normal-case font-bold tracking-normal">
+                                      · aucun niveau requis
                                     </span>
                                   </div>
                                   <motion.button
@@ -841,25 +845,23 @@ export default function InscriptionParent() {
                                     whileHover={{ scale: 1.01 }}
                                     whileTap={{ scale: 0.99 }}
                                     onClick={() => toggleNiveau(index, 'langue_speciale')}
-                                    className={`relative w-full py-4 px-4 rounded-xl font-bold text-sm transition-all ${
+                                    className={`relative w-full py-3.5 px-4 rounded-lg font-bold text-[12px] transition-all ${
                                       enfant.niveaux.includes('langue_speciale')
-                                        ? 'bg-gradient-to-br from-emerald-600 to-emerald-500 text-white shadow-lg border-2 border-emerald-700'
-                                        : 'bg-white text-slate-700 border-2 border-slate-200 hover:border-emerald-300'
+                                        ? 'bg-gradient-to-br from-emerald-600 to-emerald-500 text-white shadow-md'
+                                        : 'bg-white text-slate-700 border border-slate-200 hover:border-emerald-300'
                                     }`}
                                   >
                                     {enfant.niveaux.includes('langue_speciale') && (
                                       <motion.div
                                         initial={{ scale: 0 }}
                                         animate={{ scale: 1 }}
-                                        className="absolute -top-2 -right-2 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-md border-2 border-emerald-600"
+                                        className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-sm border border-emerald-600"
                                       >
-                                        <svg className="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 13l4 4L19 7" />
-                                        </svg>
+                                        <IconCheck className="w-2.5 h-2.5 text-emerald-600" />
                                       </motion.div>
                                     )}
-                                    <div className="flex items-center justify-center gap-3">
-                                      <span className="text-2xl">📕</span>
+                                    <div className="flex items-center justify-center gap-2.5">
+                                      <span className="text-lg">📕</span>
                                       <div className="text-left">
                                         <div>Coran / Langue étrangère</div>
                                         <div
@@ -880,13 +882,13 @@ export default function InscriptionParent() {
                                   <motion.div
                                     initial={{ opacity: 0, y: -5 }}
                                     animate={{ opacity: 1, y: 0 }}
-                                    className="mt-4 p-3 bg-blue-50 rounded-xl border border-blue-100"
+                                    className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-100"
                                   >
-                                    <p className="text-xs font-bold text-blue-900 mb-1">
-                                      📚 Matières disponibles
+                                    <p className="text-[11px] font-bold text-blue-900 mb-1">
+                                      Matières disponibles
                                     </p>
                                     {matieres.map((m, i) => (
-                                      <p key={i} className="text-xs text-blue-800">
+                                      <p key={i} className="text-[11px] text-blue-800">
                                         • {m}
                                       </p>
                                     ))}
@@ -901,17 +903,17 @@ export default function InscriptionParent() {
                                     initial={{ opacity: 0, height: 0 }}
                                     animate={{ opacity: 1, height: 'auto' }}
                                     exit={{ opacity: 0, height: 0 }}
-                                    className="overflow-hidden bg-white rounded-2xl p-5 border-2 border-indigo-100"
+                                    className="overflow-hidden bg-white rounded-xl p-4 sm:p-5 border border-slate-200"
                                   >
-                                    <div className="mb-4">
-                                      <div className="font-bold text-slate-900 text-sm">
+                                    <div className="mb-3">
+                                      <div className="font-bold text-slate-900 text-[13px]">
                                         🏫 Classes précises
                                       </div>
-                                      <div className="text-xs text-slate-500 mt-0.5">
+                                      <div className="text-[11px] text-slate-500 mt-0.5">
                                         Cochez une ou plusieurs classes
                                       </div>
                                     </div>
-                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                                       {classesDispo.map((c) => {
                                         const actif = enfant.classes.includes(c)
                                         return (
@@ -921,10 +923,10 @@ export default function InscriptionParent() {
                                             whileHover={{ scale: 1.02 }}
                                             whileTap={{ scale: 0.98 }}
                                             onClick={() => toggleItem(index, 'classes', c)}
-                                            className={`py-2.5 rounded-xl font-bold text-sm transition-all ${
+                                            className={`py-2.5 rounded-lg font-bold text-[12px] transition-all ${
                                               actif
-                                                ? 'bg-gradient-to-br from-indigo-700 to-indigo-600 text-white shadow-md'
-                                                : 'bg-white text-slate-700 border-2 border-slate-200 hover:border-indigo-300'
+                                                ? 'bg-gradient-to-br from-indigo-700 to-indigo-600 text-white shadow-sm'
+                                                : 'bg-white text-slate-700 border border-slate-200 hover:border-indigo-300'
                                             }`}
                                           >
                                             {c}
@@ -943,13 +945,13 @@ export default function InscriptionParent() {
                                     initial={{ opacity: 0, height: 0 }}
                                     animate={{ opacity: 1, height: 'auto' }}
                                     exit={{ opacity: 0, height: 0 }}
-                                    className="overflow-hidden bg-white rounded-2xl p-5 border-2 border-purple-100"
+                                    className="overflow-hidden bg-white rounded-xl p-4 sm:p-5 border border-slate-200"
                                   >
-                                    <div className="mb-4">
-                                      <div className="font-bold text-slate-900 text-sm">
+                                    <div className="mb-3">
+                                      <div className="font-bold text-slate-900 text-[13px]">
                                         📕 Quelle langue ou le Coran ?
                                       </div>
-                                      <div className="text-xs text-slate-500 mt-0.5">
+                                      <div className="text-[11px] text-slate-500 mt-0.5">
                                         Cochez une ou plusieurs options
                                       </div>
                                     </div>
@@ -969,10 +971,10 @@ export default function InscriptionParent() {
                                             whileHover={{ scale: 1.02 }}
                                             whileTap={{ scale: 0.98 }}
                                             onClick={() => toggleLangueSpeciale(index, l.val)}
-                                            className={`py-3 rounded-xl font-bold text-sm transition-all ${
+                                            className={`py-2.5 rounded-lg font-bold text-[12px] transition-all ${
                                               actif
-                                                ? 'bg-gradient-to-br from-purple-700 to-purple-600 text-white shadow-md'
-                                                : 'bg-white text-slate-700 border-2 border-slate-200 hover:border-purple-300'
+                                                ? 'bg-gradient-to-br from-purple-700 to-purple-600 text-white shadow-sm'
+                                                : 'bg-white text-slate-700 border border-slate-200 hover:border-purple-300'
                                             }`}
                                           >
                                             {l.label}
@@ -985,10 +987,10 @@ export default function InscriptionParent() {
                                       <motion.div
                                         initial={{ opacity: 0, y: -5 }}
                                         animate={{ opacity: 1, y: 0 }}
-                                        className="pt-4 border-t border-purple-100"
+                                        className="pt-4 border-t border-slate-100"
                                       >
-                                        <div className="text-xs font-bold text-purple-700 mb-3">
-                                          🎯 Précisez le type d'apprentissage
+                                        <div className="text-[11px] font-bold text-purple-700 mb-2.5">
+                                          Précisez le type d'apprentissage
                                         </div>
                                         <div className="grid grid-cols-2 gap-2">
                                           {precisions.map((p) => {
@@ -999,13 +1001,11 @@ export default function InscriptionParent() {
                                                 type="button"
                                                 whileHover={{ scale: 1.02 }}
                                                 whileTap={{ scale: 0.98 }}
-                                                onClick={() =>
-                                                  toggleItem(index, 'precisionsLangues', p.val)
-                                                }
-                                                className={`p-3 rounded-xl font-bold text-xs transition-all flex items-center gap-2 ${
+                                                onClick={() => toggleItem(index, 'precisionsLangues', p.val)}
+                                                className={`p-2.5 rounded-lg font-bold text-[11px] transition-all flex items-center gap-1.5 ${
                                                   actif
-                                                    ? 'bg-purple-600 text-white shadow-md'
-                                                    : 'bg-white text-slate-700 border-2 border-slate-200 hover:border-purple-300'
+                                                    ? 'bg-purple-600 text-white shadow-sm'
+                                                    : 'bg-white text-slate-700 border border-slate-200 hover:border-purple-300'
                                                 }`}
                                               >
                                                 <span>{p.emoji}</span>
@@ -1021,13 +1021,13 @@ export default function InscriptionParent() {
                               </AnimatePresence>
 
                               {/* Langues comprises */}
-                              <div className="bg-white rounded-2xl p-5 border-2 border-emerald-100">
-                                <div className="mb-4">
-                                  <div className="font-bold text-slate-900 text-sm">
+                              <div className="bg-white rounded-xl p-4 sm:p-5 border border-slate-200">
+                                <div className="mb-3">
+                                  <div className="font-bold text-slate-900 text-[13px]">
                                     💬 Langues comprises par l'enfant
                                   </div>
-                                  <div className="text-xs text-slate-500 mt-1 leading-relaxed">
-                                    Cochez les langues que votre enfant comprend bien. Cela nous aide à proposer les meilleurs profs.
+                                  <div className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                                    Cochez les langues que votre enfant comprend bien.
                                   </div>
                                 </div>
 
@@ -1045,13 +1045,11 @@ export default function InscriptionParent() {
                                         type="button"
                                         whileHover={{ scale: 1.02 }}
                                         whileTap={{ scale: 0.98 }}
-                                        onClick={() =>
-                                          toggleItem(index, 'languesComprises', l.val)
-                                        }
-                                        className={`py-3 rounded-xl font-bold text-sm transition-all ${
+                                        onClick={() => toggleItem(index, 'languesComprises', l.val)}
+                                        className={`py-2.5 rounded-lg font-bold text-[12px] transition-all ${
                                           actif
-                                            ? 'bg-gradient-to-br from-emerald-600 to-emerald-500 text-white shadow-md'
-                                            : 'bg-white text-slate-700 border-2 border-slate-200 hover:border-emerald-300'
+                                            ? 'bg-gradient-to-br from-emerald-600 to-emerald-500 text-white shadow-sm'
+                                            : 'bg-white text-slate-700 border border-slate-200 hover:border-emerald-300'
                                         }`}
                                       >
                                         {l.label}
@@ -1067,45 +1065,40 @@ export default function InscriptionParent() {
 
                       <motion.button
                         type="button"
-                        whileHover={{ scale: 1.01 }}
-                        whileTap={{ scale: 0.99 }}
+                        whileHover={{ scale: 1.005 }}
+                        whileTap={{ scale: 0.995 }}
                         onClick={ajouterEnfant}
-                        className="w-full py-4 border-2 border-dashed border-slate-300 rounded-2xl text-slate-600 font-bold hover:bg-white hover:border-blue-400 hover:text-blue-700 transition-all flex items-center justify-center gap-2"
+                        className="w-full py-4 border-2 border-dashed border-slate-300 rounded-xl text-slate-600 font-bold text-[13px] hover:bg-white hover:border-blue-400 hover:text-blue-700 transition-all flex items-center justify-center gap-2"
                       >
-                        <span className="text-xl">+</span>
+                        <span className="text-lg">+</span>
                         Ajouter un autre enfant
                       </motion.button>
 
-                      <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-xl">
-                        <p className="text-xs text-blue-800">
-                          💡 <strong>Astuce :</strong> Plus vous précisez les besoins de vos enfants, plus nous pourrons vous proposer les professeurs les mieux adaptés.
+                      <div className="bg-blue-50 border-l-4 border-blue-500 p-3.5 rounded-lg">
+                        <p className="text-[12px] text-blue-800 leading-relaxed">
+                          <strong>Astuce :</strong> Plus vous précisez les besoins de vos enfants, plus nous pourrons vous proposer les professeurs les mieux adaptés.
                         </p>
                       </div>
                     </div>
                   </motion.div>
                 )}
 
-                {/* ============================================================ */}
                 {/* ÉTAPE 3 */}
-                {/* ============================================================ */}
                 {etape === 3 && (
-                  <motion.div
-                    key="etape3"
-                    {...fadeUp}
-                    transition={{ duration: 0.4 }}
-                    className="p-8 md:p-10"
-                  >
-                    <div className="mb-8">
-                      <div className="text-xs font-bold text-blue-700 uppercase tracking-wider mb-2">
-                        Étape 3 / 3
+                  <motion.div key="etape3" {...fadeUp} transition={{ duration: 0.35 }} className="p-6 sm:p-8 md:p-10">
+                    <div className="mb-7">
+                      <div className="text-[10px] font-black text-blue-700 uppercase tracking-[0.15em] mb-2">
+                        Étape 3 sur 3
                       </div>
-                      <h2 className="text-3xl font-black text-slate-900">Vos préférences</h2>
-                      <p className="text-slate-500 mt-2">
+                      <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                        Vos préférences
+                      </h2>
+                      <p className="text-sm text-slate-500 mt-1.5">
                         Comment souhaitez-vous organiser les cours ?
                       </p>
                     </div>
 
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       {[
                         {
                           id: 'unSeulProf',
@@ -1124,10 +1117,10 @@ export default function InscriptionParent() {
                         return (
                           <motion.label
                             key={opt.id}
-                            whileHover={{ scale: actif ? 1.01 : 1.02 }}
-                            className={`flex items-start gap-4 p-5 rounded-2xl border-2 cursor-pointer transition-all ${
+                            whileHover={{ scale: actif ? 1 : 1.005 }}
+                            className={`flex items-start gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
                               actif
-                                ? 'border-blue-700 bg-blue-50 shadow-lg'
+                                ? 'border-blue-700 bg-blue-50/50'
                                 : 'border-slate-200 bg-white hover:border-blue-300'
                             }`}
                           >
@@ -1142,17 +1135,13 @@ export default function InscriptionParent() {
                                   unProfParMatiere: opt.id === 'unProfParMatiere',
                                 })
                               }
-                              className="mt-1 w-5 h-5 accent-blue-700"
+                              className="mt-1 w-4 h-4 accent-blue-700"
                             />
                             <div className="flex-1 flex items-start gap-3">
-                              <span className="text-2xl">{opt.emoji}</span>
+                              <span className="text-xl">{opt.emoji}</span>
                               <div>
-                                <div className="font-bold text-slate-900 text-sm">
-                                  {opt.titre}
-                                </div>
-                                <div className="text-xs text-slate-500 mt-1">
-                                  {opt.desc}
-                                </div>
+                                <div className="font-bold text-slate-900 text-[13px]">{opt.titre}</div>
+                                <div className="text-[12px] text-slate-500 mt-0.5">{opt.desc}</div>
                               </div>
                             </div>
                           </motion.label>
@@ -1160,10 +1149,10 @@ export default function InscriptionParent() {
                       })}
 
                       <motion.label
-                        whileHover={{ scale: 1.01 }}
-                        className={`flex items-center gap-3 cursor-pointer p-4 rounded-2xl border-2 transition-all ${
+                        whileHover={{ scale: 1.005 }}
+                        className={`flex items-center gap-3 cursor-pointer p-4 rounded-xl border-2 transition-all ${
                           preferences.coursADomicile
-                            ? 'border-emerald-600 bg-emerald-50'
+                            ? 'border-emerald-600 bg-emerald-50/50'
                             : 'border-slate-200 bg-white hover:border-emerald-300'
                         }`}
                       >
@@ -1171,38 +1160,35 @@ export default function InscriptionParent() {
                           type="checkbox"
                           checked={preferences.coursADomicile}
                           onChange={(e) =>
-                            setPreferences({
-                              ...preferences,
-                              coursADomicile: e.target.checked,
-                            })
+                            setPreferences({ ...preferences, coursADomicile: e.target.checked })
                           }
-                          className="w-5 h-5 accent-emerald-700"
+                          className="w-4 h-4 accent-emerald-700"
                         />
                         <div className="flex-1 flex items-center gap-2">
-                          <span className="text-xl">🏠</span>
-                          <span className="text-sm font-bold text-slate-800">
+                          <span className="text-lg">🏠</span>
+                          <span className="text-[13px] font-bold text-slate-800">
                             Je préfère les cours à mon domicile
                           </span>
                         </div>
                       </motion.label>
 
-                      <div className="bg-gradient-to-br from-emerald-50 to-blue-50 p-5 rounded-2xl border border-emerald-100">
+                      <div className="bg-gradient-to-br from-emerald-50 to-blue-50 p-4 sm:p-5 rounded-xl border border-emerald-100">
                         <div className="flex gap-3">
-                          <span className="text-xl">✅</span>
+                          <span className="text-lg">✅</span>
                           <div>
-                            <p className="text-sm font-semibold text-emerald-900 mb-1">
+                            <p className="text-[13px] font-bold text-emerald-900 mb-1">
                               Prêt à trouver votre professeur !
                             </p>
-                            <p className="text-sm text-emerald-800 leading-relaxed">
-                              Après validation, vous pourrez parcourir les profils vérifiés, contacter les professeurs et organiser une première rencontre.
+                            <p className="text-[12px] text-emerald-800 leading-relaxed">
+                              Après validation, vous pourrez parcourir les profils vérifiés et organiser une première rencontre.
                             </p>
                           </div>
                         </div>
                       </div>
 
-                      <div className="bg-blue-50/50 rounded-2xl p-4 border border-blue-200">
-                        <p className="text-xs text-blue-800 leading-relaxed">
-                          💡 <strong>Bon à savoir :</strong> Vous pourrez discuter des horaires précis et des prix directement avec le professeur après votre première rencontre.
+                      <div className="bg-slate-50 rounded-xl p-3.5 border border-slate-200">
+                        <p className="text-[11px] text-slate-600 leading-relaxed">
+                          💡 <strong>Bon à savoir :</strong> Vous pourrez discuter des horaires précis et des prix directement avec le professeur.
                         </p>
                       </div>
                     </div>
@@ -1210,62 +1196,66 @@ export default function InscriptionParent() {
                 )}
               </AnimatePresence>
 
-              {/* Navigation */}
-              <div className="border-t border-slate-200/70 bg-white/60 backdrop-blur-sm p-6 md:p-8 flex gap-4">
+              {/* NAVIGATION */}
+              <div className="border-t border-slate-200/70 bg-slate-50/50 p-4 sm:p-6 flex gap-3">
                 {etape > 1 && (
                   <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
                     type="button"
                     onClick={precedent}
                     disabled={loading}
-                    className="px-6 py-4 rounded-2xl font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors disabled:opacity-50"
+                    className="px-5 py-3.5 rounded-xl font-bold text-[13px] text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors disabled:opacity-50"
                   >
                     ← Précédent
                   </motion.button>
                 )}
                 {etape < 3 ? (
                   <motion.button
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
+                    whileHover={{ scale: 1.005 }}
+                    whileTap={{ scale: 0.995 }}
                     type="button"
                     onClick={suivant}
-                    className="flex-1 py-4 rounded-2xl font-bold text-white bg-gradient-to-r from-blue-700 to-emerald-600 shadow-lg shadow-blue-700/30 hover:shadow-xl transition-all"
+                    className="flex-1 py-3.5 rounded-xl font-bold text-[13px] text-white bg-gradient-to-r from-blue-700 to-blue-600 shadow-md shadow-blue-600/20 hover:shadow-lg transition-all"
                   >
                     Continuer →
                   </motion.button>
                 ) : (
                   <motion.button
-                    whileHover={{ scale: loading ? 1 : 1.01 }}
-                    whileTap={{ scale: loading ? 1 : 0.99 }}
+                    whileHover={{ scale: loading ? 1 : 1.005 }}
+                    whileTap={{ scale: loading ? 1 : 0.995 }}
                     type="button"
                     onClick={soumettre}
                     disabled={loading}
-                    className="flex-1 py-4 rounded-2xl font-bold text-white bg-gradient-to-r from-emerald-600 to-emerald-500 shadow-lg shadow-emerald-600/30 hover:shadow-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="flex-1 py-3.5 rounded-xl font-bold text-[13px] text-white bg-gradient-to-r from-emerald-600 to-emerald-500 shadow-md shadow-emerald-600/20 hover:shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     {loading ? (
                       <>
                         <motion.div
                           animate={{ rotate: 360 }}
                           transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                          className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
+                          className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
                         />
                         Création du compte...
                       </>
                     ) : (
-                      '✓ Créer mon compte parent'
+                      <>
+                        <IconCheck className="w-4 h-4" />
+                        Créer mon compte
+                      </>
                     )}
                   </motion.button>
                 )}
               </div>
             </div>
 
+            {/* Footer aide */}
             <div className="text-center mt-6">
               <a
                 href="https://wa.me/25377741482"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-slate-500 hover:text-emerald-600 transition-colors inline-flex items-center gap-2"
+                className="text-[12px] text-slate-500 hover:text-emerald-600 transition-colors inline-flex items-center gap-1.5 font-medium"
               >
                 💬 Besoin d'aide ? Contactez-nous sur WhatsApp
               </a>
@@ -1278,9 +1268,8 @@ export default function InscriptionParent() {
 }
 
 // ============================================================
-// COMPOSANT FIELD
+// COMPOSANT FIELD (raffiné)
 // ============================================================
-
 function Field({
   label,
   value,
@@ -1300,7 +1289,7 @@ function Field({
 }) {
   return (
     <div>
-      <label className="block text-sm font-bold text-slate-700 mb-2">
+      <label className="block text-[11px] font-black text-slate-600 mb-2 uppercase tracking-[0.08em]">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       <input
@@ -1308,17 +1297,16 @@ function Field({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none font-medium text-slate-800 transition-all placeholder:text-slate-400"
+        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none font-medium text-slate-900 text-[13px] transition-all placeholder:text-slate-400 placeholder:font-normal"
       />
-      {hint && <p className="text-xs text-slate-500 mt-1.5">{hint}</p>}
+      {hint && <p className="text-[11px] text-slate-500 mt-1.5">{hint}</p>}
     </div>
   )
 }
 
 // ============================================================
-// COMPOSANT TELEPHONE FIELD (avec +253 fixe et formatage)
+// COMPOSANT TELEPHONE FIELD (raffiné)
 // ============================================================
-
 function TelephoneField({
   label,
   value,
@@ -1332,11 +1320,11 @@ function TelephoneField({
 }) {
   return (
     <div>
-      <label className="block text-sm font-bold text-slate-700 mb-2">
+      <label className="block text-[11px] font-black text-slate-600 mb-2 uppercase tracking-[0.08em]">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
-      <div className="flex items-center bg-white border border-slate-200 rounded-xl focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent transition-all overflow-hidden">
-        <div className="px-4 py-3.5 bg-slate-100 border-r border-slate-200 font-bold text-slate-700 flex items-center gap-2 flex-shrink-0">
+      <div className="flex items-center bg-white border border-slate-200 rounded-xl focus-within:ring-4 focus-within:ring-blue-500/10 focus-within:border-blue-500 transition-all overflow-hidden">
+        <div className="px-3 py-3 bg-slate-50 border-r border-slate-200 font-bold text-slate-600 text-[12px] flex items-center gap-1.5 flex-shrink-0">
           <span>🇩🇯</span>
           <span>+253</span>
         </div>
@@ -1348,12 +1336,10 @@ function TelephoneField({
           onChange={(e) => onChange(formaterTelephone(e.target.value))}
           placeholder="77 74 14 82"
           maxLength={11}
-          className="flex-1 px-4 py-3.5 bg-transparent outline-none font-medium text-slate-800 placeholder:text-slate-400"
+          className="flex-1 px-3 py-3 bg-transparent outline-none font-medium text-slate-900 text-[13px] placeholder:text-slate-400 placeholder:font-normal"
         />
       </div>
-      <p className="text-xs text-slate-500 mt-1.5">
-        Entrez 8 chiffres (uniquement des chiffres)
-      </p>
+      <p className="text-[11px] text-slate-500 mt-1.5">8 chiffres</p>
     </div>
   )
 }

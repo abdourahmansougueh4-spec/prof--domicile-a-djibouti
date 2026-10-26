@@ -1,34 +1,87 @@
 'use client'
 
+import { useId } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 
+// ============================================================
+// LOGO (identique à la page d'accueil)
+// ============================================================
+function Logo({ size = 'md', onDark = false }: { size?: 'sm' | 'md' | 'lg'; onDark?: boolean }) {
+  const uid = useId().replace(/:/g, '')
+  const sizes = {
+    sm: { box: 'w-8 h-8', icon: 'w-6 h-6', djib: 'text-[8px]', super: 'text-sm' },
+    md: { box: 'w-10 h-10', icon: 'w-8 h-8', djib: 'text-[9px]', super: 'text-lg' },
+    lg: { box: 'w-14 h-14', icon: 'w-11 h-11', djib: 'text-xs', super: 'text-2xl' },
+  }
+  const s = sizes[size]
+  const bgId = `logoBg${uid}`
+  const glowId = `logoGlow${uid}`
+
+  return (
+    <div className="flex items-center gap-2.5">
+      <div className={`${s.box} rounded-xl shadow-lg shadow-blue-600/20 flex-shrink-0`}>
+        <svg className={`${s.icon} w-full h-full`} viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id={bgId} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#1e3a8a" />
+              <stop offset="50%" stopColor="#2563eb" />
+              <stop offset="100%" stopColor="#059669" />
+            </linearGradient>
+            <radialGradient id={glowId} cx="30%" cy="20%" r="70%">
+              <stop offset="0%" stopColor="white" stopOpacity="0.35" />
+              <stop offset="100%" stopColor="white" stopOpacity="0" />
+            </radialGradient>
+          </defs>
+          <rect width="120" height="120" rx="28" fill={`url(#${bgId})`} />
+          <rect width="120" height="120" rx="28" fill={`url(#${glowId})`} />
+          <g transform="translate(60, 68)">
+            <path d="M0 -26 L36 -10 L0 8 L-36 -10 Z" fill="white" />
+            <path d="M-24 -2 L-24 16 Q-24 26 -12 26 L12 26 Q24 26 24 16 L24 -2 L0 8 Z" fill="white" opacity="0.85" />
+            <path d="M36 -10 Q43 -3 43 6" stroke="#fbbf24" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+            <circle cx="43" cy="9" r="3.5" fill="#fbbf24" />
+          </g>
+          <g transform="translate(93, 26)">
+            <path d="M0 -9 L2.6 -2.9 L9.4 -2.9 L4 -1 L6.2 5.6 L0 1.8 L-6.2 5.6 L-4 -1 L-9.4 -2.9 L-2.6 -2.9 Z" fill="#dc2626" />
+          </g>
+        </svg>
+      </div>
+      <div className="flex flex-col leading-none">
+        <span className={`${s.djib} font-black tracking-[0.18em] uppercase text-slate-400`}>Djib</span>
+        <span className={`${s.super} font-black tracking-tight -mt-0.5 ${onDark ? 'text-white' : 'text-slate-900'}`}>
+          Superprof
+        </span>
+      </div>
+    </div>
+  )
+}
+
+// ============================================================
+// PAGE
+// ============================================================
 export default function ChoixInscription() {
   return (
     <div className="min-h-screen bg-[#f8fafc] relative overflow-hidden flex flex-col selection:bg-blue-200">
-      {/* 🌟 Décor de fond premium animé */}
-      <motion.div 
-        animate={{ x: [0, 40, 0], y: [0, 20, 0] }} 
+      {/* Décor de fond premium animé */}
+      <motion.div
+        animate={{ x: [0, 40, 0], y: [0, 20, 0] }}
         transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-blue-400/10 rounded-full blur-[100px] pointer-events-none" 
+        className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-blue-400/10 rounded-full blur-[100px] pointer-events-none"
       />
-      <motion.div 
-        animate={{ x: [0, -40, 0], y: [0, -20, 0] }} 
+      <motion.div
+        animate={{ x: [0, -40, 0], y: [0, -20, 0] }}
         transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-emerald-400/10 rounded-full blur-[100px] pointer-events-none" 
+        className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-emerald-400/10 rounded-full blur-[100px] pointer-events-none"
       />
 
-      {/* 🧭 Navbar */}
+      {/* 🧭 Navbar avec le VRAI logo */}
       <nav className="relative z-20 bg-white/60 backdrop-blur-xl border-b border-white/40 shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-          <Link href="/" className="flex items-center gap-2 group">
-            <span className="text-2xl font-black bg-gradient-to-r from-blue-800 to-emerald-600 bg-clip-text text-transparent tracking-tight group-hover:opacity-80 transition-opacity">
-              Prof À Domicile
-            </span>
-            <span className="text-xl group-hover:scale-110 transition-transform">🇩🇯</span>
+          <Link href="/" className="group hover:opacity-80 transition-opacity">
+            <Logo size="md" />
           </Link>
           <Link
-            href="/connexion"
+            href="/login"
             className="text-sm font-bold text-slate-600 hover:text-blue-700 transition-colors bg-white/50 px-4 py-2 rounded-full border border-slate-200 hover:border-blue-300"
           >
             Déjà un compte ? Se connecter
@@ -38,7 +91,6 @@ export default function ChoixInscription() {
 
       {/* 🚀 Contenu principal */}
       <main className="relative z-10 flex-1 flex flex-col justify-center max-w-6xl mx-auto px-4 sm:px-6 py-16 w-full">
-        
         {/* En-tête */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -57,7 +109,7 @@ export default function ChoixInscription() {
             Rejoignez la communauté
             <br />
             <span className="bg-gradient-to-r from-blue-700 via-cyan-600 to-emerald-600 bg-clip-text text-transparent">
-              Prof À Domicile
+              Djib Superprof
             </span>
           </h1>
           <p className="text-lg text-slate-500 max-w-2xl mx-auto font-medium">
@@ -67,66 +119,53 @@ export default function ChoixInscription() {
 
         {/* 🃏 Cartes de choix */}
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-stretch">
-          
-          {/* ======================================= */}
-          {/* CARTE PARENT (Thème Bleu/Cyan) */}
-          {/* ======================================= */}
+          {/* CARTE PARENT */}
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
             className="group relative flex h-full"
           >
-            {/* Halo lumineux au survol */}
             <div className="absolute -inset-1 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-[2.5rem] blur-xl opacity-0 group-hover:opacity-20 transition-opacity duration-500" />
-            
             <div className="relative w-full bg-white/90 backdrop-blur-xl rounded-[2.5rem] p-8 md:p-10 border border-slate-200 shadow-xl shadow-blue-900/5 group-hover:shadow-2xl group-hover:shadow-blue-900/10 group-hover:-translate-y-2 transition-all duration-500 flex flex-col overflow-hidden">
-              {/* Barre de couleur en haut */}
               <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-600 to-cyan-400" />
-              
               <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center text-4xl mb-8 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500 shadow-inner border border-blue-200/50">
                 👨‍👩‍👧‍👦
               </div>
-              
-              <h2 className="text-3xl font-black text-slate-900 mb-2">
-                Je suis Parent
-              </h2>
+              <h2 className="text-3xl font-black text-slate-900 mb-2">Je suis Parent</h2>
               <p className="text-lg font-bold text-blue-600 mb-6 flex items-center gap-2">
                 Trouvez le prof idéal <span className="text-xl">🎯</span>
               </p>
-              
               <p className="text-slate-600 mb-8 flex-1 font-medium leading-relaxed">
                 Accédez à des professeurs rigoureusement vérifiés pour accompagner vos enfants vers la réussite scolaire.
               </p>
-
               <ul className="space-y-4 mb-8">
                 {[
                   'Professeurs vérifiés et qualifiés',
                   'Cours à domicile adaptés à votre enfant',
                   'Suivi personnalisé et transparent',
-                  'Service 100% gratuit pour les parents'
+                  'Service 100% gratuit pour les parents',
                 ].map((item, i) => (
                   <li key={i} className="flex items-start gap-3">
                     <div className="mt-1 w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 text-blue-600">
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
                     </div>
                     <span className="text-sm font-semibold text-slate-700">{item}</span>
                   </li>
                 ))}
               </ul>
-
-              {/* BOUTON PRINCIPAL PARENT */}
               <Link
                 href="/inscription/parent"
                 className="w-full py-5 rounded-2xl font-black text-white text-lg bg-gradient-to-r from-blue-700 to-blue-600 shadow-lg shadow-blue-600/30 group-hover:shadow-blue-600/50 group-hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-3 relative overflow-hidden mb-6"
               >
                 <span className="relative z-10">Créer un compte Parent</span>
-                <svg className="w-5 h-5 relative z-10 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
-                {/* Effet de brillance */}
+                <svg className="w-5 h-5 relative z-10 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
                 <div className="absolute inset-0 h-full w-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
               </Link>
-
-              {/* LIENS DOCUMENTS OFFICIELS (À LIRE AVANT DE S'INSCRIRE) */}
               <div className="bg-blue-50/50 rounded-2xl p-4 border border-blue-100">
                 <p className="text-xs font-bold text-blue-800 mb-3 uppercase tracking-wider flex items-center gap-1">
                   📖 À lire avant de s'inscrire :
@@ -149,65 +188,53 @@ export default function ChoixInscription() {
             </div>
           </motion.div>
 
-          {/* ======================================= */}
-          {/* CARTE PROFESSEUR (Thème Émeraude/Teal) */}
-          {/* ======================================= */}
+          {/* CARTE PROFESSEUR */}
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
             className="group relative flex h-full"
           >
-            {/* Halo lumineux au survol */}
             <div className="absolute -inset-1 bg-gradient-to-br from-emerald-400 to-teal-400 rounded-[2.5rem] blur-xl opacity-0 group-hover:opacity-20 transition-opacity duration-500" />
-            
             <div className="relative w-full bg-white/90 backdrop-blur-xl rounded-[2.5rem] p-8 md:p-10 border border-slate-200 shadow-xl shadow-emerald-900/5 group-hover:shadow-2xl group-hover:shadow-emerald-900/10 group-hover:-translate-y-2 transition-all duration-500 flex flex-col overflow-hidden">
-              {/* Barre de couleur en haut */}
               <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-600 to-teal-400" />
-              
               <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-emerald-50 to-emerald-100 flex items-center justify-center text-4xl mb-8 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500 shadow-inner border border-emerald-200/50">
                 👨‍🏫
               </div>
-              
-              <h2 className="text-3xl font-black text-slate-900 mb-2">
-                Je suis Professeur
-              </h2>
+              <h2 className="text-3xl font-black text-slate-900 mb-2">Je suis Professeur</h2>
               <p className="text-lg font-bold text-emerald-600 mb-6 flex items-center gap-2">
                 Partagez votre savoir <span className="text-xl">🌟</span>
               </p>
-              
               <p className="text-slate-600 mb-8 flex-1 font-medium leading-relaxed">
                 Rejoignez notre réseau d'enseignants, trouvez des élèves près de chez vous et gérez vos horaires librement.
               </p>
-
               <ul className="space-y-4 mb-8">
                 {[
                   'Élèves motivés près de chez vous',
                   'Revenus flexibles selon vos horaires',
                   'Badge de vérification pour rassurer',
-                  'Zéro frais d\'inscription initiaux'
+                  "Zéro frais d'inscription initiaux",
                 ].map((item, i) => (
                   <li key={i} className="flex items-start gap-3">
                     <div className="mt-1 w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0 text-emerald-600">
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
                     </div>
                     <span className="text-sm font-semibold text-slate-700">{item}</span>
                   </li>
                 ))}
               </ul>
-
-              {/* BOUTON PRINCIPAL PROFESSEUR */}
               <Link
                 href="/inscription/professeur"
                 className="w-full py-5 rounded-2xl font-black text-white text-lg bg-gradient-to-r from-emerald-600 to-emerald-500 shadow-lg shadow-emerald-600/30 group-hover:shadow-emerald-600/50 group-hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-3 relative overflow-hidden mb-6"
               >
                 <span className="relative z-10">Créer un compte Professeur</span>
-                <svg className="w-5 h-5 relative z-10 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
-                {/* Effet de brillance */}
+                <svg className="w-5 h-5 relative z-10 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
                 <div className="absolute inset-0 h-full w-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
               </Link>
-
-              {/* LIENS DOCUMENTS OFFICIELS (À LIRE AVANT DE S'INSCRIRE) */}
               <div className="bg-emerald-50/50 rounded-2xl p-4 border border-emerald-100">
                 <p className="text-xs font-bold text-emerald-800 mb-3 uppercase tracking-wider flex items-center gap-1">
                   📖 À lire avant de s'inscrire :
@@ -256,7 +283,7 @@ export default function ChoixInscription() {
       {/* Footer */}
       <footer className="relative z-10 text-center py-8">
         <p className="text-sm text-slate-400 font-medium">
-          © {new Date().getFullYear()} Prof À Domicile Djibouti. Fait avec ❤️ pour l'éducation.
+          © {new Date().getFullYear()} Djib Superprof — Fait avec ❤️ pour l'éducation à Djibouti.
         </p>
       </footer>
     </div>

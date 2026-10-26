@@ -1,9 +1,61 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useId } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+
+// ============================================================
+// LOGO (identique à la page d'accueil)
+// ============================================================
+function Logo({ size = 'md', onDark = false }: { size?: 'sm' | 'md' | 'lg'; onDark?: boolean }) {
+  const uid = useId().replace(/:/g, '')
+  const sizes = {
+    sm: { box: 'w-8 h-8', icon: 'w-6 h-6', djib: 'text-[8px]', super: 'text-sm' },
+    md: { box: 'w-10 h-10', icon: 'w-8 h-8', djib: 'text-[9px]', super: 'text-lg' },
+    lg: { box: 'w-14 h-14', icon: 'w-11 h-11', djib: 'text-xs', super: 'text-2xl' },
+  }
+  const s = sizes[size]
+  const bgId = `logoBg${uid}`
+  const glowId = `logoGlow${uid}`
+
+  return (
+    <div className="flex items-center gap-2.5">
+      <div className={`${s.box} rounded-xl shadow-lg shadow-blue-600/20 flex-shrink-0`}>
+        <svg className={`${s.icon} w-full h-full`} viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id={bgId} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#1e3a8a" />
+              <stop offset="50%" stopColor="#2563eb" />
+              <stop offset="100%" stopColor="#059669" />
+            </linearGradient>
+            <radialGradient id={glowId} cx="30%" cy="20%" r="70%">
+              <stop offset="0%" stopColor="white" stopOpacity="0.35" />
+              <stop offset="100%" stopColor="white" stopOpacity="0" />
+            </radialGradient>
+          </defs>
+          <rect width="120" height="120" rx="28" fill={`url(#${bgId})`} />
+          <rect width="120" height="120" rx="28" fill={`url(#${glowId})`} />
+          <g transform="translate(60, 68)">
+            <path d="M0 -26 L36 -10 L0 8 L-36 -10 Z" fill="white" />
+            <path d="M-24 -2 L-24 16 Q-24 26 -12 26 L12 26 Q24 26 24 16 L24 -2 L0 8 Z" fill="white" opacity="0.85" />
+            <path d="M36 -10 Q43 -3 43 6" stroke="#fbbf24" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+            <circle cx="43" cy="9" r="3.5" fill="#fbbf24" />
+          </g>
+          <g transform="translate(93, 26)">
+            <path d="M0 -9 L2.6 -2.9 L9.4 -2.9 L4 -1 L6.2 5.6 L0 1.8 L-6.2 5.6 L-4 -1 L-9.4 -2.9 L-2.6 -2.9 Z" fill="#dc2626" />
+          </g>
+        </svg>
+      </div>
+      <div className="flex flex-col leading-none">
+        <span className={`${s.djib} font-black tracking-[0.18em] uppercase text-slate-400`}>Djib</span>
+        <span className={`${s.super} font-black tracking-tight -mt-0.5 ${onDark ? 'text-white' : 'text-slate-900'}`}>
+          Superprof
+        </span>
+      </div>
+    </div>
+  )
+}
 
 // ============================================================
 // TYPES
@@ -340,7 +392,7 @@ export default function DashboardParent() {
       // Demandes acceptées
       const acceptees = demandes.filter((d) => d.statut === 'acceptee')
 
-      // ✅ DÉDUPLIQUER les profs par ID
+      // DÉDUPLIQUER les profs par ID
       const profsUniques = new Map<string, any>()
       acceptees.forEach((d) => {
         if (!profsUniques.has(d.professeur_id)) {
@@ -375,7 +427,7 @@ export default function DashboardParent() {
       }
       setProfsActifs(profsList)
 
-      // ✅ DÉDUPLIQUER les demandes récentes (pour ne pas voir 2 fois le même prof)
+      // DÉDUPLIQUER les demandes récentes
       const demandesUniques = new Map<string, any>()
       demandes.forEach((d) => {
         const key = `${d.professeur_id}-${d.statut}`
@@ -509,6 +561,35 @@ export default function DashboardParent() {
   return (
     <div className="space-y-4 sm:space-y-5 md:space-y-6 pb-10">
 
+      {/* ✅ LOGO + NOM + BANDE DE RÉASSURANCE */}
+      <motion.div
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="flex items-center justify-between px-1 gap-3 flex-wrap"
+      >
+        <Link href="/" className="hover:opacity-80 transition-opacity flex-shrink-0">
+          <Logo size="sm" />
+        </Link>
+        <div className="flex items-center gap-3 sm:gap-4 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400">
+          <span className="hidden sm:inline-flex items-center gap-1">
+            <span className="text-emerald-500">●</span> Données chiffrées
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <span className="text-emerald-500">●</span> Profs vérifiés
+          </span>
+          <span className="hidden md:inline-flex items-center gap-1">
+            <span className="text-emerald-500">●</span> 100% Djibouti
+          </span>
+          <Link
+            href="/"
+            className="text-slate-400 hover:text-slate-600 transition-colors inline-flex items-center gap-1"
+          >
+            Accueil <span className="text-sm">→</span>
+          </Link>
+        </div>
+      </motion.div>
+
       {/* HERO */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -530,7 +611,7 @@ export default function DashboardParent() {
             </div>
             <div className="flex-1 min-w-[200px]">
               <div className="text-[10px] sm:text-xs font-bold uppercase tracking-wider mb-1 opacity-90">
-                {salutation.emoji} Espace parent
+                {salutation.emoji} Espace parent sécurisé
               </div>
               <h1 className="text-xl sm:text-2xl md:text-3xl font-black leading-tight">
                 {salutation.texte}, {profil.prenom} !
@@ -538,6 +619,10 @@ export default function DashboardParent() {
               {profil.quartier && (
                 <p className="text-[11px] sm:text-xs text-blue-100 mt-1">📍 {profil.quartier}</p>
               )}
+              {/* ✅ Phrase rassurante */}
+              <p className="text-[10px] sm:text-xs text-blue-100/80 mt-1.5 italic">
+                Vos informations sont protégées et confidentielles.
+              </p>
             </div>
           </div>
 

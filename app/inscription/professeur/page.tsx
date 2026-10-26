@@ -1,10 +1,62 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useId } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+
+// ============================================================
+// LOGO (identique à la page d'accueil)
+// ============================================================
+function Logo({ size = 'md', onDark = false }: { size?: 'sm' | 'md' | 'lg'; onDark?: boolean }) {
+  const uid = useId().replace(/:/g, '')
+  const sizes = {
+    sm: { box: 'w-8 h-8', icon: 'w-6 h-6', djib: 'text-[8px]', super: 'text-sm' },
+    md: { box: 'w-10 h-10', icon: 'w-8 h-8', djib: 'text-[9px]', super: 'text-lg' },
+    lg: { box: 'w-14 h-14', icon: 'w-11 h-11', djib: 'text-xs', super: 'text-2xl' },
+  }
+  const s = sizes[size]
+  const bgId = `logoBg${uid}`
+  const glowId = `logoGlow${uid}`
+
+  return (
+    <div className="flex items-center gap-2.5">
+      <div className={`${s.box} rounded-xl shadow-lg shadow-blue-600/20 flex-shrink-0`}>
+        <svg className={`${s.icon} w-full h-full`} viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id={bgId} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#1e3a8a" />
+              <stop offset="50%" stopColor="#2563eb" />
+              <stop offset="100%" stopColor="#059669" />
+            </linearGradient>
+            <radialGradient id={glowId} cx="30%" cy="20%" r="70%">
+              <stop offset="0%" stopColor="white" stopOpacity="0.35" />
+              <stop offset="100%" stopColor="white" stopOpacity="0" />
+            </radialGradient>
+          </defs>
+          <rect width="120" height="120" rx="28" fill={`url(#${bgId})`} />
+          <rect width="120" height="120" rx="28" fill={`url(#${glowId})`} />
+          <g transform="translate(60, 68)">
+            <path d="M0 -26 L36 -10 L0 8 L-36 -10 Z" fill="white" />
+            <path d="M-24 -2 L-24 16 Q-24 26 -12 26 L12 26 Q24 26 24 16 L24 -2 L0 8 Z" fill="white" opacity="0.85" />
+            <path d="M36 -10 Q43 -3 43 6" stroke="#fbbf24" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+            <circle cx="43" cy="9" r="3.5" fill="#fbbf24" />
+          </g>
+          <g transform="translate(93, 26)">
+            <path d="M0 -9 L2.6 -2.9 L9.4 -2.9 L4 -1 L6.2 5.6 L0 1.8 L-6.2 5.6 L-4 -1 L-9.4 -2.9 L-2.6 -2.9 Z" fill="#dc2626" />
+          </g>
+        </svg>
+      </div>
+      <div className="flex flex-col leading-none">
+        <span className={`${s.djib} font-black tracking-[0.18em] uppercase text-slate-400`}>Djib</span>
+        <span className={`${s.super} font-black tracking-tight -mt-0.5 ${onDark ? 'text-white' : 'text-slate-900'}`}>
+          Superprof
+        </span>
+      </div>
+    </div>
+  )
+}
 
 type Professeur = {
   nomComplet: string
@@ -102,11 +154,8 @@ export default function InscriptionProfesseur() {
     { val: 'lycee_maths', label: 'Lycée — Maths', besoinBacS: true },
   ]
 
-  // Formater un numéro : uniquement 8 chiffres, groupés par 2
   const formaterTelephone = (valeur: string) => {
-    // Ne garder que les chiffres
     const chiffres = valeur.replace(/\D/g, '').slice(0, 8)
-    // Grouper par 2 : 77 41 14 82
     const groupes: string[] = []
     for (let i = 0; i < chiffres.length; i += 2) {
       groupes.push(chiffres.slice(i, i + 2))
@@ -114,7 +163,6 @@ export default function InscriptionProfesseur() {
     return groupes.join(' ')
   }
 
-  // Validation email
   const emailValide = (email: string) => {
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     return regex.test(email)
@@ -461,7 +509,7 @@ export default function InscriptionProfesseur() {
         if (dispoErr) console.error('Erreur dispos:', JSON.stringify(dispoErr, null, 2))
       }
 
-      alert('🎉 Inscription réussie !\n\nBienvenue sur Prof À Domicile Djibouti. Complétez vos documents dans votre espace pour être vérifié.')
+      alert('🎉 Inscription réussie !\n\nBienvenue sur Djib Superprof. Complétez vos documents dans votre espace pour être vérifié.')
       router.push('/espace-professeur/documents')
     } catch (err) {
       console.error('Erreur générale:', err)
@@ -492,22 +540,28 @@ export default function InscriptionProfesseur() {
         transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
       />
 
+      {/* ✅ NAV avec Logo Djib Superprof */}
       <nav className="relative z-10 backdrop-blur-md bg-white/70 border-b border-white/40">
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-          <Link href="/" className="flex items-center gap-2">
-            <span className="text-2xl font-black bg-gradient-to-r from-blue-700 to-emerald-600 bg-clip-text text-transparent">
-              Prof À Domicile
-            </span>
-            <span className="text-xl">🇩🇯</span>
+          <Link href="/" className="flex items-center">
+            <Logo size="md" />
           </Link>
-          <a
-            href="https://wa.me/25377741482"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm font-medium text-slate-600 hover:text-emerald-600 transition-colors"
-          >
-            💬 Aide
-          </a>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/login"
+              className="hidden sm:inline-flex text-sm font-bold text-slate-600 hover:text-emerald-600 transition-colors"
+            >
+              Déjà un compte ?
+            </Link>
+            <a
+              href="https://wa.me/25377741482"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-medium text-slate-600 hover:text-emerald-600 transition-colors"
+            >
+              💬 Aide
+            </a>
+          </div>
         </div>
       </nav>
 
@@ -528,7 +582,7 @@ export default function InscriptionProfesseur() {
             Devenez professeur
             <br />
             <span className="bg-gradient-to-r from-emerald-600 via-teal-600 to-blue-700 bg-clip-text text-transparent">
-              à domicile à Djibouti
+              sur Djib Superprof
             </span>
           </h1>
           <p className="text-lg text-slate-600 max-w-2xl mx-auto">
@@ -853,7 +907,7 @@ export default function InscriptionProfesseur() {
                                         💬 WhatsApp
                                       </a>
                                       <a
-                                        href="mailto:contact@profadomicile.dj"
+                                        href="mailto:contact@djibsuperprof.dj"
                                         className="inline-flex items-center gap-1 bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-800"
                                       >
                                         ✉️ Email
@@ -1573,7 +1627,7 @@ export default function InscriptionProfesseur() {
 }
 
 // ═══════════════════════════════════════════════════════
-// COMPOSANT FIELD (pour les champs texte normaux)
+// COMPOSANT FIELD
 // ═══════════════════════════════════════════════════════
 function Field({
   label,
@@ -1610,7 +1664,7 @@ function Field({
 }
 
 // ═══════════════════════════════════════════════════════
-// COMPOSANT TELEPHONE FIELD (avec +253 fixe et formatage)
+// COMPOSANT TELEPHONE FIELD
 // ═══════════════════════════════════════════════════════
 function TelephoneField({
   label,
@@ -1638,12 +1692,10 @@ function TelephoneField({
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       <div className="flex items-center bg-white border border-slate-200 rounded-xl focus-within:ring-2 focus-within:ring-emerald-500 focus-within:border-transparent transition-all overflow-hidden">
-        {/* Préfixe fixe */}
         <div className="px-4 py-3.5 bg-slate-100 border-r border-slate-200 font-bold text-slate-700 flex items-center gap-2 flex-shrink-0">
           <span>🇩🇯</span>
           <span>+253</span>
         </div>
-        {/* Champ de saisie */}
         <input
           type="tel"
           inputMode="numeric"
