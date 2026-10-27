@@ -31,9 +31,7 @@ export default function ChatBot() {
   }, [])
 
   useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
-    }
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isLoading])
 
   const sendMessage = async (e: FormEvent) => {
@@ -96,7 +94,6 @@ export default function ChatBot() {
 
   return (
     <>
-      {/* BULLE */}
       <div className="fixed bottom-6 right-5 z-[9999] flex flex-col items-center">
         <motion.div
           animate={{ scale: [1, 1.3, 1], opacity: [0.4, 0, 0.4] }}
@@ -127,7 +124,6 @@ export default function ChatBot() {
         )}
       </div>
 
-      {/* FENÊTRE */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -137,7 +133,6 @@ export default function ChatBot() {
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             className="fixed bottom-28 right-5 z-[9998] w-[calc(100vw-2.5rem)] max-w-[380px] h-[65vh] max-h-[600px] flex flex-col overflow-hidden bg-white/95 backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] border border-white/60 rounded-[2rem]"
           >
-            {/* Header */}
             <div className="bg-gradient-to-r from-indigo-800 via-blue-700 to-emerald-600 px-5 py-4 text-white flex-shrink-0">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-3">
@@ -164,7 +159,6 @@ export default function ChatBot() {
               </div>
             </div>
 
-            {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/50">
               {messages.map((msg, i) => (
                 <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -198,7 +192,6 @@ export default function ChatBot() {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Form */}
             <form onSubmit={sendMessage} className="p-3 bg-white border-t border-slate-100 flex gap-2 items-center flex-shrink-0">
               <input
                 type="text"
