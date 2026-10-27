@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 
 // =====================================================================================
-// ROUTE.TS — Coach Djib ULTIME — VERSION COMPLÈTE ET FONCTIONNELLE
-// Toutes les connaissances + optimisations Groq
+// FICHIER : app/api/chat/route.ts
+// Coach Djib — Version ULTRA COMPLÈTE et fonctionnelle
 // =====================================================================================
 
 interface ChatMessage {
@@ -17,7 +17,7 @@ interface RequestBody {
 }
 
 // =====================================================================================
-// LES 4 VÉRITÉS ABSOLUES (répétées 2x — ancrage mémoire)
+// LES 4 VÉRITÉS ABSOLUES (répétées 2x pour ancrage mémoire)
 // =====================================================================================
 
 const V1_FINANCIER = `
@@ -29,8 +29,8 @@ const V1_FINANCIER = `
 `;
 
 const V2_LOCALISATION = `
-🔴 VÉRITÉ N°2 — LOCALISATION :
-- JAMAIS de cours en ligne. Aucune exception. Aucun Zoom, Teams, Google Meet, visio.
+🔴 VÉRITÉ N°2 — LOCALISATION DES COURS :
+- JAMAIS de cours en ligne. Aucune exception. Aucun Zoom, Teams, Google Meet, visio, cours à distance.
 - Tous les cours sont EN PRÉSENTIEL : chez le prof OU chez l'élève.
 - C'est LE PARENT qui DÉCIDE du lieu. Le prof indique ses préférences (chez lui / chez l'élève / les deux), le parent choisit.
 `;
@@ -52,7 +52,7 @@ const V4_TRANSPARENCE = `
 `;
 
 // =====================================================================================
-// BASE DE CONNAISSANCES COMPACTE MAIS COMPLÈTE
+// BASE DE CONNAISSANCES COMPLÈTE
 // =====================================================================================
 
 const KB = {
@@ -119,9 +119,9 @@ const KB = {
       'Hésiter à signaler un problème',
     ],
     espace: [
-      'Dashboard : vue d\'ensemble',
+      'Dashboard : vue d\'ensemble (enfants, demandes, profs, revenus, avis)',
       'Enfants : gérer les profils (niveaux, classes, langues)',
-      'Recherche : trouver un prof',
+      'Recherche : trouver un prof (filtres)',
       'Demandes : suivre les demandes envoyées',
       'Mes profs : voir les profs actifs + suivis',
       'Avis : noter les profs',
@@ -129,12 +129,12 @@ const KB = {
       'Profil : modifier ses infos',
       'Charte qualité : relire les engagements',
       'Règles : règles d\'or du parent',
-      'Coach IA : conseils',
+      'Coach IA : conseils personnalisés',
       'Notifications : alertes temps réel',
     ],
     onboarding: [
       'Étape 1 : nom, email, mot de passe (6+ car.), téléphone, WhatsApp, quartier',
-      'Étape 2 : enfants (prénom optionnel, niveaux, classes, langues comprises, langues à apprendre)',
+      'Étape 2 : enfants (prénom, niveaux, classes, langues comprises, langues à apprendre)',
       'Étape 3 : préférences (un seul prof ou un prof par matière, cours chez soi ou chez le prof)',
       'Validation : compte créé en 3 minutes',
       'Prochaine étape : rechercher un prof + envoyer la première demande',
@@ -152,15 +152,15 @@ const KB = {
       'Pont linguistique : prof qui parle la langue de l\'enfant',
     ],
     regles_or: [
-      'R1 — Respect mutuel : le prof est un professionnel, pas un domestique',
-      'R2 — Alliance éducative : vérifier devoirs, maintenir discipline',
+      'R1 — Respect mutuel : le prof est un professionnel',
+      'R2 — Alliance éducative : vérifier devoirs, discipline',
       'R3 — Temps = trésor : préavis 24h en cas d\'annulation',
-      'R4 — Éthique financière : paiement direct au prof, avant le cours',
+      'R4 — Éthique financière : paiement direct au prof',
       'R5 — Loyauté : ne jamais contourner la plateforme',
       'R6 — Devoir de signalement : signaler immédiatement',
       'R7 — Évaluation honnête : noter selon travail réel',
       'R8 — Porte ouverte : jamais seul dans pièce fermée',
-      'R9 — Objectif pédagogique : maîtrise, pas juste les devoirs',
+      'R9 — Objectif pédagogique : maîtrise, pas juste devoirs',
       'R10 — Pont linguistique : prof qui parle la langue de l\'enfant',
     ],
   },
@@ -185,7 +185,7 @@ const KB = {
       '3': 'Expert — 12 mois + note > 4.5',
     },
     badges: {
-      recommande: 'Admin, prof exceptionnel',
+      recommande: 'Admin, prof exceptionnel (régularité, politesse, bons avis)',
       super_pro: '3 étoiles + note > 4.7',
       pionnier: '50 premiers inscrits (gratuit à vie)',
       pionnier_illustre: 'Badge VIP du CEO',
@@ -252,7 +252,12 @@ const KB = {
       'Collège — Arabe',
       'Lycée — Maths (Bac S requis)',
     ],
-    langues_speciales: ['Arabe (débutant/conversation/grammaire/perfectionnement)', 'Coran (lecture/tajwid/mémorisation/tafsir)', 'Français (débutant/conversation/grammaire/perfectionnement)', 'Anglais (débutant/conversation/grammaire/perfectionnement)'],
+    langues_speciales: [
+      'Arabe (débutant/conversation/grammaire/perfectionnement)',
+      'Coran (lecture/tajwid/mémorisation/tafsir)',
+      'Français (débutant/conversation/grammaire/perfectionnement)',
+      'Anglais (débutant/conversation/grammaire/perfectionnement)',
+    ],
     langues_parlees: ['Français', 'Arabe', 'Somali', 'Afar', 'Anglais'],
     creneaux: 'Matin 8h-12h · Après-midi 12h-17h · Soir 17h-21h · 7j/7',
     min_seances: '6 créneaux minimum sur 21 (recommandé 10+)',
@@ -447,12 +452,12 @@ const KB = {
 };
 
 // =====================================================================================
-// OBJECTIONS GÉNÉRALES (80+)
+// OBJECTIONS (80+)
 // =====================================================================================
 
 const OBJECTIONS: Record<string, string> = {
   // FINANCIER
-  'trop cher': "Le parent ne paie RIEN. Inscription, recherche, contact, remplacement : tout est gratuit. Prof : 30% du PREMIER salaire UNE FOIS, puis 100% pour lui.",
+  'trop cher': "Le parent ne paie RIEN. Inscription, recherche, contact, remplacement : tout gratuit. Prof : 30% du PREMIER salaire UNE FOIS, puis 100%.",
   'pas de budget': "Aucun budget plateforme parent. Vous payez le prof directement, selon vos moyens.",
   'les 30%': "30% UNE SEULE FOIS sur le PREMIER salaire. PAS une commission perpétuelle. Après le 1er mois : 100% pour le prof.",
   'pourquoi profs paient': "30% UNE SEULE FOIS pour rejoindre un réseau d'élite. Parent ne paie rien. Modèle inversé.",
@@ -571,7 +576,6 @@ const OBJECTIONS: Record<string, string> = {
 // =====================================================================================
 
 const EDGE_CASES: Record<string, string> = {
-  // COMMUNICATION
   'salutation': "Accueille chaleureusement et demande : parent, prof ou élève ?",
   'ok/oui/non': "Propose UNE action concrète.",
   'message vide': "Redemande poliment.",
@@ -586,7 +590,6 @@ const EDGE_CASES: Record<string, string> = {
   'faute orthographe': "Ne pas corriger. Répondre normalement.",
   'merci': "Clôture polie. Ne pas relancer.",
   
-  // TECHNIQUE
   'mot de passe': "Bouton 'Mot de passe oublié' sur login.",
   'email utilisé': "Mot de passe oublié OU connexion directe.",
   'erreur upload': "Moins de 5 Mo, JPG/PNG/PDF.",
@@ -596,7 +599,6 @@ const EDGE_CASES: Record<string, string> = {
   'données perdues': "Support WhatsApp immédiat.",
   'supprimer compte': "Support WhatsApp. Suppression 48h.",
   
-  // ÉMOTIONNEL
   'en colère': "'Je comprends. Support : +253 77 74 14 82.'",
   'triste': "'Désolé. Support disponible 7j/7.'",
   'désespéré': "'Ne vous découragez pas. Solution ensemble.'",
@@ -605,7 +607,6 @@ const EDGE_CASES: Record<string, string> = {
   'insiste': "Support WhatsApp.",
   'plainte': "'Retour pris au sérieux. Support pour suivi.'",
   
-  // SÉCURITÉ
   'abus': "Signaler immédiatement espace parent + WhatsApp. Suspension + autorités.",
   'inapproprié': "Signaler. Suspension 24h. Bannissement + autorités.",
   'enfant seul': "Porte ouverte = adulte présent. Signaler si contraire.",
@@ -613,7 +614,6 @@ const EDGE_CASES: Record<string, string> = {
   'données': "Chiffrées. Aucune revente. Suppression sur demande.",
   'prof dangereux': "Signaler immédiat. Suspension. Autorités si danger.",
   
-  // SPÉCIFIQUE
   'numéro prof': "Coordonnées débloquées après inscription gratuite parent.",
   'contourner': "Perte garanties (remplacement/médiation/suivi). Mauvais calcul.",
   'prix exact': "Confidentiel avant rencontre. Négociation directe.",
@@ -732,7 +732,7 @@ const ESCALADE = [
 ];
 
 // =====================================================================================
-// REFUS (7)
+// REFUS ÉLÉGANTS (7)
 // =====================================================================================
 
 const REFUSALS: Record<string, string> = {
@@ -781,7 +781,7 @@ const QUESTIONS_INTERDITES = [
 ];
 
 // =====================================================================================
-// EXEMPLES D'ÉLITE (10)
+// EXEMPLES (10)
 // =====================================================================================
 
 const EXEMPLES = [
@@ -919,7 +919,7 @@ export async function POST(req: Request) {
 
     const guidance = getContextualGuidance(currentPage || '/');
 
-    // Filtrer message d'accueil initial + slice pour éviter explosion tokens
+    // Filtre message d'accueil + slice pour éviter explosion tokens
     const conversation = messages
       .filter((m, i) => !(i === 0 && m.role === 'assistant'))
       .slice(-8);
@@ -976,14 +976,13 @@ export async function POST(req: Request) {
     const languesSList = KB.prof.langues_speciales.join(' · ');
     const zonesList = KB.prof.zones.join(' · ');
 
-    const systemPrompt = `
-Tu es "Coach Djib", l'assistant virtuel officiel de Djib Superprof à Djibouti.
+    const systemPrompt = `Tu es "Coach Djib", l'assistant virtuel officiel de Djib Superprof à Djibouti.
 Créé par ${KB.meta.fondateur}, ${KB.meta.role}.
 Mission : ${KB.meta.mission}
 Vision : ${KB.meta.vision}
 
 =====================================================================
-🚨 LES 4 VÉRITÉS ABSOLUES (NE JAMAIS OUBLIER — RÉPÉTÉES 2X)
+🚨 LES 4 VÉRITÉS ABSOLUES (NE JAMAIS OUBLIER)
 =====================================================================
 
 ${V1_FINANCIER}
@@ -999,7 +998,6 @@ ${V4_TRANSPARENCE}
 =====================================================================
 - Page : "${currentPage}"
 - Appareil : "${device}"
-- Date : ${new Date().toLocaleString('fr-FR', { timeZone: 'Africa/Djibouti' })}
 
 ${guidance}
 
@@ -1242,13 +1240,18 @@ ${V3_SUIVI}
 
 ${V4_TRANSPARENCE}
 
-Tu es Coach Djib. Tu incarnes l'excellence. Chaque mot doit refléter les 4 vérités. Sois VRAI.
-`;
+Tu es Coach Djib. Tu incarnes l'excellence. Chaque mot doit refléter les 4 vérités. Sois VRAI.`;
 
     const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
-      console.error('GROQ_API_KEY manquante');
-      throw new Error('Clé API manquante');
+      console.error('[Coach Djib] GROQ_API_KEY manquante');
+      return NextResponse.json(
+        {
+          message: 'Configuration serveur manquante. Contactez le support au +253 77 74 14 82.',
+          status: 'config_error',
+        },
+        { status: 500 }
+      );
     }
 
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -1258,7 +1261,7 @@ Tu es Coach Djib. Tu incarnes l'excellence. Chaque mot doit refléter les 4 vér
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'openai/gpt-oss-20b',
+        model: 'llama-3.3-70b-versatile',
         messages: [{ role: 'system', content: systemPrompt }, ...conversation],
         temperature: 0.2,
         max_tokens: 450,
@@ -1270,18 +1273,46 @@ Tu es Coach Djib. Tu incarnes l'excellence. Chaque mot doit refléter les 4 vér
     const data = await response.json();
 
     if (!response.ok) {
-      console.error('Groq error:', data);
+      console.error('[Coach Djib] Groq error:', response.status, data);
+
       if (response.status === 429) {
-        return NextResponse.json({
-          message: 'Trop de demandes simultanées. Réessayez dans 1 minute ou contactez notre support au +253 77 74 14 82.',
-          status: 'rate_limit',
-        }, { status: 429 });
+        return NextResponse.json(
+          {
+            message: 'Trop de demandes simultanées. Patientez 1 minute ou contactez le support au +253 77 74 14 82.',
+            status: 'rate_limit',
+          },
+          { status: 429 }
+        );
       }
-      throw new Error(data.error?.message || 'Erreur API');
+
+      if (response.status === 401) {
+        return NextResponse.json(
+          {
+            message: 'Configuration serveur invalide. Contactez le support au +253 77 74 14 82.',
+            status: 'config_error',
+          },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json(
+        {
+          message: 'Service temporairement indisponible. Contactez le support au +253 77 74 14 82.',
+          status: 'error',
+        },
+        { status: 500 }
+      );
     }
 
-    if (!data.choices || !data.choices[0]) {
-      throw new Error('Format invalide');
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+      console.error('[Coach Djib] Format invalide:', data);
+      return NextResponse.json(
+        {
+          message: 'Réponse invalide. Contactez le support au +253 77 74 14 82.',
+          status: 'error',
+        },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({
@@ -1289,10 +1320,13 @@ Tu es Coach Djib. Tu incarnes l'excellence. Chaque mot doit refléter les 4 vér
       status: 'success',
     });
   } catch (error: any) {
-    console.error('[ERREUR]', error.message);
-    return NextResponse.json({
-      message: 'Désolé, problème technique. Contactez notre support au +253 77 74 14 82.',
-      status: 'error',
-    }, { status: 500 });
+    console.error('[Coach Djib] Erreur critique:', error?.message || error);
+    return NextResponse.json(
+      {
+        message: 'Désolé, problème technique. Contactez notre support au +253 77 74 14 82.',
+        status: 'error',
+      },
+      { status: 500 }
+    );
   }
 }
